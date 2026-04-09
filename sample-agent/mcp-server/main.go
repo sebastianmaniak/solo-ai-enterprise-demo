@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -18,7 +19,41 @@ var wikiBaseURL string
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 type GetAccountSummaryArgs struct {
-	CustomerName string `json:"customer_name" jsonschema:"Full name of the customer (e.g. John Smith),required"`
+	CustomerName string `json:"customer_name" jsonschema:"description=Full name of the customer (e.g. John Smith)"`
+}
+
+func handleGetAccountSummary(ctx context.Context, req *mcp.CallToolRequest, args GetAccountSummaryArgs) (*mcp.CallToolResult, any, error) {
+	if args.CustomerName == "" {
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: "customer_name is required"}},
+			IsError: true,
+		}, nil, nil
+	}
+
+	namePath := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(args.CustomerName), " ", "-"))
+	pageURL := fmt.Sprintf("%s/wiki/customers/%s", wikiBaseURL, url.PathEscape(namePath))
+
+	resp, err := httpClient.Get(pageURL)
+	if err != nil {
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Error fetching customer: %v", err)}},
+			IsError: true,
+		}, nil, nil
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Customer '%s' not found.", args.CustomerName)}},
+		}, nil, nil
+	}
+
+	body, _ := io.ReadAll(resp.Body)
+	summary := extractSummary(string(body), args.CustomerName)
+
+	return &mcp.CallToolResult{
+		Content: []mcp.Content{&mcp.TextContent{Text: summary}},
+	}, nil, nil
 }
 
 func main() {
@@ -35,43 +70,20 @@ func main() {
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "get_account_summary",
 		Description: "Get a brief account summary for a Solo Bank customer. Returns key facts: name, credit score, total balances, and account status.",
-	}, func(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetAccountSummaryArgs]) (*mcp.CallToolResultFor[any], error) {
-		args := params.Arguments
-		namePath := strings.ToLower(strings.ReplaceAll(strings.TrimSpace(args.CustomerName), " ", "-"))
-		pageURL := fmt.Sprintf("%s/wiki/customers/%s", wikiBaseURL, url.PathEscape(namePath))
-
-		resp, err := httpClient.Get(pageURL)
-		if err != nil {
-			return &mcp.CallToolResultFor[any]{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Error fetching customer: %v", err)}},
-				IsError: true,
-			}, nil
-		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusNotFound {
-			return &mcp.CallToolResultFor[any]{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Customer '%s' not found.", args.CustomerName)}},
-			}, nil
-		}
-
-		body, _ := io.ReadAll(resp.Body)
-		summary := extractSummary(string(body), args.CustomerName)
-
-		return &mcp.CallToolResultFor[any]{
-			Content: []mcp.Content{&mcp.TextContent{Text: summary}},
-		}, nil
-	})
+	}, handleGetAccountSummary)
 
 	handler := mcp.NewStreamableHTTPHandler(func(r *http.Request) *mcp.Server { return server }, nil)
 
-	http.Handle("/mcp", handler)
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte(`{"status":"ok"}`))
+	mux := http.NewServeMux()
+	mux.Handle("/mcp", handler)
+	mux.Handle("/mcp/", handler)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 	})
 
-	log.Println("Account Summary MCP server starting on :8084")
-	if err := http.ListenAndServe(":8084", nil); err != nil {
+	log.Println("account-summary-tools MCP server starting on :8085")
+	if err := http.ListenAndServe(":8085", mux); err != nil {
 		log.Fatalf("Server error: %v", err)
 	}
 }
@@ -113,7 +125,6 @@ func extractSummary(markdown, name string) string {
 	for _, bl := range balanceLines {
 		sb.WriteString(fmt.Sprintf("%s\n", bl))
 	}
-
 	return sb.String()
 }
 

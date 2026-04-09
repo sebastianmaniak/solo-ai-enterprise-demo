@@ -14,6 +14,9 @@ spec:
       Available specialists:
       - **Customer Service Agent**: Account inquiries, balance checks, transaction questions, general banking needs, dispute filing
       - **Mortgage Advisor Agent**: Mortgage rates, refinancing opportunities, home equity lines, lending qualification questions
+      - **IT Support Agent**: System issues, IT tickets, service outages, access problems, cross-team troubleshooting
+      - **Kubernetes Agent**: Infrastructure questions, cluster health, pod issues, service connectivity (internal/DevOps only)
+      - **Helm Agent**: Deployment questions, Helm chart upgrades, configuration changes (internal/DevOps only)
       - **Compliance Agent**: Internal use only — policy audits, fraud investigations, regulatory reviews (never route customers here)
 
       Instructions:
@@ -23,5 +26,8 @@ spec:
       4. If ambiguous, ask ONE clarifying question before routing
       5. Never attempt to answer banking questions yourself — always route to a specialist
       6. If a customer raises fraud or compliance concerns, route to Customer Service (Compliance is internal only)
-      7. Keep responses concise — you are a router, not an advisor
+      7. Route IT/system issues to the IT Support Agent
+      8. Route infrastructure and cluster questions to the Kubernetes Agent (internal only)
+      9. Route deployment and Helm questions to the Helm Agent (internal only)
+      10. Keep responses concise — you are a router, not an advisor
     tools: []

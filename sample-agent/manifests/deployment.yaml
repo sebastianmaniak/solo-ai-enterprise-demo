@@ -16,18 +16,18 @@ spec:
         app: account-summary-tools
     spec:
       containers:
-      - name: summary-tools
+      - name: account-summary-tools
         image: account-summary-tools:latest
         imagePullPolicy: Never
         ports:
-        - containerPort: 8084
+        - containerPort: 8085
         env:
         - name: WIKI_SERVER_URL
           value: "http://bank-wiki-server.bank-wiki.svc.cluster.local:8080"
         readinessProbe:
           httpGet:
             path: /health
-            port: 8084
+            port: 8085
           initialDelaySeconds: 2
           periodSeconds: 5
 ---
@@ -40,5 +40,5 @@ spec:
   selector:
     app: account-summary-tools
   ports:
-  - port: 8084
-    targetPort: 8084
+  - port: 8085
+    targetPort: 8085

@@ -82,13 +82,12 @@ func rateTypeToPath(rateType string) string {
 	}
 }
 
-func handleGetPolicy(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetPolicyArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleGetPolicy(ctx context.Context, req *mcp.CallToolRequest, args GetPolicyArgs) (*mcp.CallToolResult, any, error) {
 	if args.PolicyName == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "policy_name is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	// Try exact mapping first
@@ -96,53 +95,52 @@ func handleGetPolicy(ctx context.Context, ss *mcp.ServerSession, params *mcp.Cal
 	if path != "" {
 		content, err := wikiClient.GetPage(path)
 		if err == nil {
-			return &mcp.CallToolResultFor[any]{
+			return &mcp.CallToolResult{
 				Content: []mcp.Content{&mcp.TextContent{Text: content}},
-			}, nil
+			}, nil, nil
 		}
 	}
 
 	// Fall back to search
 	results, err := wikiClient.Search(args.PolicyName)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search error: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	for _, r := range results {
 		if strings.HasPrefix(r.Path, "policies/") || strings.HasPrefix(r.Path, "procedures/") {
 			content, err := wikiClient.GetPage(r.Path)
 			if err == nil {
-				return &mcp.CallToolResultFor[any]{
+				return &mcp.CallToolResult{
 					Content: []mcp.Content{&mcp.TextContent{Text: content}},
-				}, nil
+				}, nil, nil
 			}
 		}
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("policy not found: %s", args.PolicyName)}},
 		IsError: true,
-	}, nil
+	}, nil, nil
 }
 
-func handleSearchPolicies(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[SearchPoliciesArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleSearchPolicies(ctx context.Context, req *mcp.CallToolRequest, args SearchPoliciesArgs) (*mcp.CallToolResult, any, error) {
 	if args.Query == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "query is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	results, err := wikiClient.Search(args.Query)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search error: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	var sb strings.Builder
@@ -161,92 +159,90 @@ func handleSearchPolicies(ctx context.Context, ss *mcp.ServerSession, params *mc
 	}
 
 	if count == 0 {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("no policies or procedures found for query: %s", args.Query)}},
-		}, nil
+		}, nil, nil
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: sb.String()}},
-	}, nil
+	}, nil, nil
 }
 
-func handleGetCurrentRates(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetCurrentRatesArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleGetCurrentRates(ctx context.Context, req *mcp.CallToolRequest, args GetCurrentRatesArgs) (*mcp.CallToolResult, any, error) {
 	if args.RateType == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "rate_type is required (mortgage, savings, cd, or credit-card)"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	path := rateTypeToPath(args.RateType)
 	if path == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("unknown rate_type: %s. Valid values are: mortgage, savings, cd, credit-card", args.RateType)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	content, err := wikiClient.GetPage(path)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("failed to retrieve rates: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: content}},
-	}, nil
+	}, nil, nil
 }
 
-func handleGetRateForProfile(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetRateForProfileArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleGetRateForProfile(ctx context.Context, req *mcp.CallToolRequest, args GetRateForProfileArgs) (*mcp.CallToolResult, any, error) {
 	if args.LoanType == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "loan_type is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 	if args.CreditScore <= 0 {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "credit_score is required and must be a positive integer"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	path := rateTypeToPath(args.LoanType)
 	if path == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("unknown loan_type: %s. Valid values are: mortgage, savings, cd, credit-card", args.LoanType)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	// Fetch rate table for the loan type
 	rateContent, err := wikiClient.GetPage(path)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("failed to retrieve rate table: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	// Fetch credit score tiers policy
 	tierContent, err := wikiClient.GetPage("policies/credit-score-tiers")
 	if err != nil {
 		// Return rate content alone if tiers not available
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("Credit Score: %d\nLoan Type: %s\n\n%s\n\n(Note: could not retrieve credit score tiers: %v)", args.CreditScore, args.LoanType, rateContent, err)}},
-		}, nil
+		}, nil, nil
 	}
 
 	combined := fmt.Sprintf("Credit Score: %d\nLoan Type: %s\n\n# Rate Table\n\n%s\n\n# Credit Score Tiers\n\n%s", args.CreditScore, args.LoanType, rateContent, tierContent)
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: combined}},
-	}, nil
+	}, nil, nil
 }
 
 func main() {

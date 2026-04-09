@@ -41,7 +41,6 @@ spec:
         - lookup_customer
         - search_customers
         - get_account_balance
-        - get_transaction_history
     - type: McpServer
       mcpServer:
         name: bank-policy-tools

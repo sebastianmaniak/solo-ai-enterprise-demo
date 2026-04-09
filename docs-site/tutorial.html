@@ -5,6 +5,99 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Build Your Own Agent — Solo Bank AI Enterprise Demo</title>
   <link rel="stylesheet" href="static/style.css" />
+  <style>
+    /* ── Wizard ── */
+    .wizard { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+
+    /* Stepper */
+    .stepper { display: flex; align-items: flex-start; justify-content: center; gap: 0; margin: 40px 0 48px; position: relative; }
+    .stepper::before { content: ''; position: absolute; top: 20px; left: 25%; right: 25%; height: 3px; background: var(--border); z-index: 0; }
+    .stepper-progress { position: absolute; top: 20px; left: 25%; height: 3px; background: var(--primary); z-index: 1; transition: width 0.5s ease; width: 0; }
+    .stepper-step { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; cursor: pointer; width: 160px; }
+    .stepper-dot { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: var(--text-muted); transition: all 0.3s ease; }
+    .stepper-step.active .stepper-dot { border-color: var(--primary); background: var(--primary); color: white; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.15); }
+    .stepper-step.done .stepper-dot { border-color: var(--secondary); background: var(--secondary); color: white; }
+    .stepper-label { margin-top: 10px; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-align: center; }
+    .stepper-step.active .stepper-label { color: var(--primary); }
+    .stepper-step.done .stepper-label { color: var(--secondary); }
+
+    /* Panels */
+    .step-panel { display: none; animation: fadeIn 0.3s ease; }
+    .step-panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .step-header { margin-bottom: 28px; }
+    .step-header h2 { font-size: 1.5rem; font-weight: 800; margin: 0 0 8px; border: none; padding: 0; }
+    .step-header p { color: var(--text-muted); font-size: 1rem; margin: 0; }
+
+    /* Code blocks */
+    .code-block { margin: 16px 0 20px; border-radius: var(--radius); overflow: hidden; border: 1px solid #1e293b; }
+    .code-header { background: #1e293b; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .code-filename { font-family: var(--font-mono); font-size: 0.8rem; color: #94a3b8; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .code-filename .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .code-filename .dot.shell { background: #4ade80; }
+    .code-filename .dot.yaml { background: #f59e0b; }
+    .code-filename .dot.go { background: #00ADD8; }
+    .code-block pre { margin: 0; border: none !important; border-radius: 0; }
+    .code-block pre code { font-size: 0.85rem; background: none !important; border: none !important; padding: 0 !important; display: block; }
+
+    .btn-copy { padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid #475569; background: transparent; color: #94a3b8; transition: all 0.15s; font-family: var(--font); }
+    .btn-copy:hover { background: #334155; color: #e2e8f0; }
+    .btn-copy.copied { background: var(--secondary); border-color: var(--secondary); color: white; }
+
+    /* Architecture visual */
+    .arch-visual { background: var(--code-bg); border-radius: var(--radius); padding: 28px; margin: 24px 0; border: 1px solid #1e293b; text-align: center; }
+    .arch-row { display: flex; justify-content: center; gap: 16px; margin: 6px 0; flex-wrap: wrap; }
+    .arch-node { padding: 10px 18px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; font-family: var(--font-mono); border: 2px solid; min-width: 120px; }
+    .arch-node.agent { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #93c5fd; }
+    .arch-node.tool { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; color: #86efac; }
+    .arch-node.registry { background: rgba(251, 191, 36, 0.1); border-color: #fbbf24; color: #fde68a; }
+    .arch-node.k8s { background: rgba(168, 85, 247, 0.1); border-color: #a855f7; color: #d8b4fe; }
+    .arch-node.new { animation: pulseGlow 2s infinite; }
+    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); } }
+    .arch-arrow { color: #475569; font-size: 1.1rem; margin: 4px 0; }
+    .arch-label { color: #64748b; font-size: 0.7rem; margin-top: 2px; font-family: var(--font); }
+
+    /* Details/expand */
+    details { margin: 16px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+    details summary { padding: 12px 18px; font-weight: 600; font-size: 0.9rem; cursor: pointer; background: var(--surface-alt); color: var(--text-muted); user-select: none; }
+    details summary:hover { color: var(--text); }
+    details[open] summary { border-bottom: 1px solid var(--border); }
+    details .details-body { padding: 16px 18px; }
+    details .details-body p { font-size: 0.9rem; margin-bottom: 12px; }
+
+    /* Nav */
+    .step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .btn-nav { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: var(--radius); font-size: 0.95rem; font-weight: 600; cursor: pointer; border: 2px solid; transition: all 0.2s; font-family: var(--font); }
+    .btn-prev { background: var(--surface); border-color: var(--border); color: var(--text-muted); }
+    .btn-prev:hover { border-color: var(--text-muted); color: var(--text); }
+    .btn-next { background: var(--primary); border-color: var(--primary); color: white; }
+    .btn-next:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+    .btn-next.danger { background: var(--accent); border-color: var(--accent); }
+    .btn-next.danger:hover { background: #dc2626; border-color: #dc2626; }
+    .btn-next.complete { background: var(--secondary); border-color: var(--secondary); }
+
+    /* Prompt examples */
+    .prompts { margin: 16px 0 24px; }
+
+    /* Expected output */
+    .output-box { background: #0c0c0c; border: 1px solid #1e293b; border-radius: var(--radius); margin: 16px 0; overflow: hidden; }
+    .output-header { background: #1a1a1a; padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
+    .output-dots { display: flex; gap: 5px; }
+    .output-dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .output-dots span:nth-child(1) { background: #ff5f57; }
+    .output-dots span:nth-child(2) { background: #febc2e; }
+    .output-dots span:nth-child(3) { background: #28c840; }
+    .output-title { font-family: var(--font-mono); font-size: 0.75rem; color: #666; margin-left: 8px; }
+    .output-body { padding: 16px 20px; font-family: var(--font-mono); font-size: 0.82rem; color: #a3a3a3; line-height: 1.65; white-space: pre-wrap; }
+    .output-body .g { color: #4ade80; }
+    .output-body .b { color: #60a5fa; }
+    .output-body .y { color: #fbbf24; }
+
+    /* Completion */
+    .done-banner { text-align: center; padding: 40px 0 24px; }
+    .done-banner h2 { border: none; padding: 0; margin-bottom: 8px; }
+  </style>
 </head>
 <body>
 
@@ -26,506 +119,405 @@
 <!-- Page Header -->
 <div class="page-header">
   <div class="container">
-    <h1>Build Your Own Agent</h1>
-    <p>
-      A step-by-step tutorial: create a custom MCP tool server in Go, register it in AgentRegistry,
-      wire it to a kagent Agent CRD via KMCP, and test it — all in about 30 minutes.
-    </p>
+    <h1>Build an Account Summary Agent</h1>
+    <p>One script to create it. One prompt to test it. One script to clean up.</p>
   </div>
 </div>
 
-<!-- Content -->
-<div class="container">
-  <div class="content">
+<div class="wizard">
 
-    <h2>Overview</h2>
-    <p>
-      In this tutorial you'll build an <strong>Account Summary Agent</strong> — a custom agent
-      that generates brief, at-a-glance summaries of customer accounts. You'll learn every layer
-      of the Solo.io AI Enterprise Platform:
-    </p>
-    <ul>
-      <li>Writing an MCP tool server in Go using the MCP SDK</li>
-      <li>Packaging it as a Docker image and loading it into Kind</li>
-      <li>Registering the skill in AgentRegistry via REST API</li>
-      <li>Creating a <code>RemoteMCPServer</code> Kubernetes resource</li>
-      <li>Defining an <code>Agent</code> CRD and wiring it to your tool server</li>
-      <li>Testing the agent live in the Management UI</li>
-    </ul>
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="stepper-progress" id="stepper-progress"></div>
+    <div class="stepper-step active" onclick="goToStep(0)">
+      <div class="stepper-dot">1</div>
+      <div class="stepper-label">Create</div>
+    </div>
+    <div class="stepper-step" onclick="goToStep(1)">
+      <div class="stepper-dot">2</div>
+      <div class="stepper-label">Test</div>
+    </div>
+    <div class="stepper-step" onclick="goToStep(2)">
+      <div class="stepper-dot">3</div>
+      <div class="stepper-label">Clean Up</div>
+    </div>
+  </div>
 
-    <div class="callout callout-info">
-      <div class="callout-icon">ℹ️</div>
-      <div class="callout-body">
-        <strong>Prerequisites</strong>
-        You should have completed the initial <code>./setup.sh</code> and have the
-        <code>solo-bank-demo</code> Kind cluster running. You'll need Go 1.21+, Docker,
-        and <code>kubectl</code> configured for the cluster.
-      </div>
+  <!-- ================================================================ -->
+  <!-- STEP 1: CREATE                                                   -->
+  <!-- ================================================================ -->
+  <div class="step-panel active" data-step="0">
+    <div class="step-header">
+      <h2>Step 1: Create the Agent</h2>
+      <p>One command builds an MCP tool server, deploys it, wires it to kagent, and registers it in AgentRegistry.</p>
     </div>
 
-    <h2>Step-by-Step Tutorial</h2>
+    <!-- What you're building -->
+    <div class="arch-visual">
+      <div class="arch-label" style="margin-bottom: 12px; font-size: 0.8rem; color: #94a3b8;">What gets created</div>
+      <div class="arch-row"><div class="arch-node agent">Management UI</div></div>
+      <div class="arch-arrow">&#8595; chat</div>
+      <div class="arch-row"><div class="arch-node agent new">account-summary-agent</div></div>
+      <div class="arch-arrow">&#8595; MCP tool call</div>
+      <div class="arch-row"><div class="arch-node k8s">RemoteMCPServer CRD</div></div>
+      <div class="arch-arrow">&#8595; streamable-http</div>
+      <div class="arch-row"><div class="arch-node tool new">account-summary-tools :8085</div></div>
+      <div class="arch-arrow">&#8595; fetches data</div>
+      <div class="arch-row"><div class="arch-node tool">bank-wiki-server :8080</div></div>
+      <div class="arch-label">Real customer data from the wiki</div>
+    </div>
 
-    <div class="steps">
+    <!-- The command -->
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename"><span class="dot shell"></span> Run from the project root</span>
+        <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>./sample-agent/create.sh</code></pre>
+    </div>
 
-      <!-- Step 1 -->
-      <div class="step">
-        <div class="step-number">1</div>
-        <h3>Create an MCP Tool Server in Go</h3>
-        <p>
-          MCP (Model Context Protocol) tool servers expose callable functions to AI agents over HTTP.
-          Create the directory structure and write the main server file:
-        </p>
-        <pre><code>mkdir -p sample-agent/mcp-server
-cd sample-agent/mcp-server
-go mod init account-summary-tools</code></pre>
+    <!-- Expected output -->
+    <div class="output-box">
+      <div class="output-header">
+        <div class="output-dots"><span></span><span></span><span></span></div>
+        <div class="output-title">Expected Output</div>
+      </div>
+      <div class="output-body"><span class="g">&#9656; Building Docker image...</span>
+<span style="color:#525252">[+] Building 14.2s (10/10) FINISHED</span>
 
-        <p>Then create <code>sample-agent/mcp-server/main.go</code>:</p>
-        <pre><code>package main
+<span class="g">&#9656; Loading image into Kind cluster...</span>
+Image: "account-summary-tools:latest" loaded
 
-import (
-    "context"
-    "encoding/json"
-    "fmt"
-    "log"
-    "net/http"
-    "os"
+<span class="g">&#9656; Deploying MCP tool server to bank-wiki namespace...</span>
+deployment.apps/account-summary-tools created
+service/account-summary-tools created
+pod/account-summary-tools-7f8b9c-x2k9m condition met
 
-    "github.com/mark3labs/mcp-go/mcp"
-    "github.com/mark3labs/mcp-go/server"
-)
+<span class="g">&#9656; Creating RemoteMCPServer CRD...</span>
+remotemcpserver.kagent.dev/account-summary-tools created
 
-// AccountSummary holds the data we return to the agent
-type AccountSummary struct {
-    CustomerID   string  `json:"customer_id"`
-    Name         string  `json:"name"`
-    CreditScore  int     `json:"credit_score"`
-    TotalBalance float64 `json:"total_balance"`
-    AccountCount int     `json:"account_count"`
-    RiskLevel    string  `json:"risk_level"`
-    Summary      string  `json:"summary"`
+<span class="g">&#9656; Creating Agent CRD...</span>
+agent.kagent.dev/account-summary-agent created
+
+<span class="g">&#9656; Waiting for agent to be ready...</span>
+NAME                     TYPE          READY   ACCEPTED
+account-summary-agent    Declarative   True    True
+
+<span class="g">&#9656; Registering in AgentRegistry...</span>
+  <span class="g">[OK]</span> Registered in AgentRegistry
+
+<span class="g">============================================================</span>
+<span class="g">  Account Summary Agent is live!</span>
+<span class="g">============================================================</span></div>
+    </div>
+
+    <!-- Expandable: what the script does -->
+    <details>
+      <summary>See what the script does</summary>
+      <div class="details-body">
+        <p>The <code>create.sh</code> script runs 6 steps in order:</p>
+        <ol>
+          <li><strong>Build</strong> — Compiles a Go MCP tool server into a Docker image</li>
+          <li><strong>Load</strong> — Pushes the image into the Kind cluster (no registry needed)</li>
+          <li><strong>Deploy</strong> — Creates a Deployment + Service in the <code>bank-wiki</code> namespace</li>
+          <li><strong>RemoteMCPServer</strong> — Creates a CRD so kagent discovers the tool via MCP protocol</li>
+          <li><strong>Agent</strong> — Creates an Agent CRD with system prompt and tool reference</li>
+          <li><strong>Register</strong> — Adds the agent and skill to the AgentRegistry catalog</li>
+        </ol>
+      </div>
+    </details>
+
+    <!-- Expandable: the Go code -->
+    <details>
+      <summary>See the MCP server code (Go)</summary>
+      <div class="details-body">
+        <p>The tool server connects to the bank wiki to fetch real customer data:</p>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-filename"><span class="dot go"></span> sample-agent/mcp-server/main.go (key parts)</span>
+            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>// Tool handler — fetches customer page from the wiki, extracts summary
+func handleGetAccountSummary(ctx context.Context, req *mcp.CallToolRequest,
+    args GetAccountSummaryArgs) (*mcp.CallToolResult, any, error) {
+
+    namePath := strings.ToLower(strings.ReplaceAll(args.CustomerName, " ", "-"))
+    pageURL := fmt.Sprintf("%s/wiki/customers/%s", wikiBaseURL, namePath)
+
+    resp, err := httpClient.Get(pageURL)
+    // ... parse wiki markdown, extract credit score, balances, flags ...
+
+    return &amp;mcp.CallToolResult{
+        Content: []mcp.Content{&amp;mcp.TextContent{Text: summary}},
+    }, nil, nil
 }
 
 func main() {
-    // Create the MCP server
-    s := server.NewMCPServer(
-        "account-summary-tools",
-        "1.0.0",
-        server.WithToolCapabilities(true),
-    )
+    server := mcp.NewServer(&amp;mcp.Implementation{
+        Name: "account-summary-tools", Version: "1.0.0",
+    }, nil)
 
-    // Register the get_account_summary tool
-    tool := mcp.NewTool(
-        "get_account_summary",
-        mcp.WithDescription(
-            "Generate a brief account summary for a bank customer. "+
-            "Returns credit score, total balance, account count, "+
-            "risk level, and a plain-language summary.",
-        ),
-        mcp.WithString(
-            "customer_id",
-            mcp.Required(),
-            mcp.Description("The customer ID, e.g. CUST-00042"),
-        ),
-    )
+    mcp.AddTool(server, &amp;mcp.Tool{
+        Name:        "get_account_summary",
+        Description: "Get a brief account summary for a Solo Bank customer.",
+    }, handleGetAccountSummary)
 
-    s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-        customerID, ok := req.Params.Arguments["customer_id"].(string)
-        if !ok || customerID == "" {
-            return mcp.NewToolResultError("customer_id is required"), nil
-        }
+    handler := mcp.NewStreamableHTTPHandler(
+        func(r *http.Request) *mcp.Server { return server }, nil)
 
-        // In a real implementation, call the customer-tools MCP server.
-        // Here we return mock data for the tutorial.
-        summary := generateSummary(customerID)
-
-        data, err := json.MarshalIndent(summary, "", "  ")
-        if err != nil {
-            return mcp.NewToolResultError(fmt.Sprintf("marshal error: %v", err)), nil
-        }
-
-        return mcp.NewToolResultText(string(data)), nil
-    })
-
-    // Start the HTTP server
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "8084"
-    }
-
-    httpServer := server.NewStreamableHTTPServer(s)
-    log.Printf("Account Summary Tools MCP server listening on :%s/mcp", port)
-    if err := http.ListenAndServe(":"+port, httpServer); err != nil {
-        log.Fatalf("Server error: %v", err)
-    }
-}
-
-// generateSummary returns a mock account summary.
-// In production, replace this with calls to bank-customer-tools.
-func generateSummary(customerID string) AccountSummary {
-    // Simulate different customers
-    summaries := map[string]AccountSummary{
-        "CUST-00042": {
-            CustomerID:   "CUST-00042",
-            Name:         "Maria Garcia",
-            CreditScore:  742,
-            TotalBalance: 28450.00,
-            AccountCount: 3,
-            RiskLevel:    "Low",
-            Summary: "Maria is a long-standing customer (6 years) with good credit " +
-                "and healthy balances across checking, savings, and a CD account. " +
-                "No flags or compliance concerns.",
-        },
-        "CUST-00003": {
-            CustomerID:   "CUST-00003",
-            Name:         "James Wilson",
-            CreditScore:  715,
-            TotalBalance: 6200.00,
-            AccountCount: 2,
-            RiskLevel:    "Medium",
-            Summary: "James has fair credit and moderate balances. Active AML flag " +
-                "from an international wire transfer on 2025-01-08 requires follow-up.",
-        },
-    }
-
-    if s, ok := summaries[customerID]; ok {
-        return s
-    }
-
-    return AccountSummary{
-        CustomerID:   customerID,
-        Name:         "Unknown",
-        CreditScore:  0,
-        TotalBalance: 0,
-        AccountCount: 0,
-        RiskLevel:    "Unknown",
-        Summary:      fmt.Sprintf("No data found for customer %s.", customerID),
-    }
+    mux := http.NewServeMux()
+    mux.Handle("/mcp", handler)
+    mux.Handle("/mcp/", handler)
+    http.ListenAndServe(":8085", mux)
 }</code></pre>
-
-        <p>Add the MCP SDK dependency:</p>
-        <pre><code>go get github.com/mark3labs/mcp-go@latest
-go mod tidy</code></pre>
-      </div>
-
-      <!-- Step 2 -->
-      <div class="step">
-        <div class="step-number">2</div>
-        <h3>Build the Docker Image and Load into Kind</h3>
-        <p>
-          Create a Dockerfile for the MCP server, build the image, and load it directly into the
-          Kind cluster (no registry required):
-        </p>
-
-        <p>Create <code>sample-agent/mcp-server/Dockerfile</code>:</p>
-        <pre><code>FROM golang:1.21-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -o /account-summary-tools .
-
-FROM scratch
-COPY --from=builder /account-summary-tools /account-summary-tools
-EXPOSE 8084
-ENTRYPOINT ["/account-summary-tools"]</code></pre>
-
-        <p>Build and load into the cluster:</p>
-        <pre><code># Build the image
-docker build -t account-summary-tools:latest sample-agent/mcp-server/
-
-# Load directly into Kind — no registry needed
-kind load docker-image account-summary-tools:latest --name solo-bank-demo
-
-# Verify the image is available in the cluster
-docker exec solo-bank-demo-control-plane crictl images | grep account-summary</code></pre>
-
-        <p>Create the Kubernetes deployment at <code>sample-agent/manifests/deployment.yaml</code>:</p>
-        <pre><code>apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: account-summary-tools
-  namespace: bank-wiki
-  labels:
-    app: account-summary-tools
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: account-summary-tools
-  template:
-    metadata:
-      labels:
-        app: account-summary-tools
-    spec:
-      containers:
-      - name: account-summary-tools
-        image: account-summary-tools:latest
-        imagePullPolicy: Never
-        ports:
-        - containerPort: 8084
-        env:
-        - name: PORT
-          value: "8084"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: account-summary-tools
-  namespace: bank-wiki
-spec:
-  selector:
-    app: account-summary-tools
-  ports:
-  - port: 8084
-    targetPort: 8084</code></pre>
-
-        <p>Apply the deployment:</p>
-        <pre><code>kubectl apply -f sample-agent/manifests/deployment.yaml
-
-# Wait for the pod to be ready
-kubectl wait --for=condition=ready pod -l app=account-summary-tools \
-  -n bank-wiki --timeout=60s
-
-# Verify the MCP server is responding
-TOOL_POD=$(kubectl get pod -l app=account-summary-tools -n bank-wiki \
-  -o jsonpath='{.items[0].metadata.name}')
-
-kubectl exec "$TOOL_POD" -n bank-wiki -- wget -qO- http://localhost:8084/mcp</code></pre>
-      </div>
-
-      <!-- Step 3 -->
-      <div class="step">
-        <div class="step-number">3</div>
-        <h3>Register the Skill in AgentRegistry</h3>
-        <p>
-          AgentRegistry is a catalog of skills and tools. Register your new tool server so it
-          can be discovered by other agents and tooling:
-        </p>
-        <pre><code>curl -X POST http://localhost:30121/api/v1/skills \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "account-summary",
-    "description": "Generate brief customer account summaries with credit score, balance, and risk level",
-    "version": "1.0.0",
-    "tags": ["banking", "accounts", "summary"],
-    "tools": [
-      {
-        "name": "get_account_summary",
-        "description": "Get a brief account summary for a customer by their Customer ID",
-        "parameters": {
-          "customer_id": {
-            "type": "string",
-            "description": "The customer ID, e.g. CUST-00042",
-            "required": true
-          }
-        }
-      }
-    ]
-  }'</code></pre>
-
-        <p>Verify the skill was registered:</p>
-        <pre><code># List all registered skills
-curl http://localhost:30121/api/v1/skills | jq '.skills[].name'
-
-# Fetch the specific skill
-curl http://localhost:30121/api/v1/skills/account-summary | jq '.'</code></pre>
-
-        <div class="callout callout-tip">
-          <div class="callout-icon">💡</div>
-          <div class="callout-body">
-            <strong>AgentRegistry NodePort</strong>
-            AgentRegistry is exposed on NodePort 30121 by default in the demo cluster.
-            If you're accessing it differently (e.g., from inside the cluster), use the
-            service DNS: <code>http://agentregistry.agentregistry.svc.cluster.local:80</code>
-          </div>
         </div>
       </div>
+    </details>
 
-      <!-- Step 4 -->
-      <div class="step">
-        <div class="step-number">4</div>
-        <h3>Create the RemoteMCPServer Resource</h3>
-        <p>
-          A <code>RemoteMCPServer</code> is a kagent CRD that tells the agent runtime where your
-          MCP tool server lives. Create it at
-          <code>sample-agent/manifests/remote-mcp-server.yaml</code>:
-        </p>
-        <pre><code>apiVersion: kagent.dev/v1alpha2
-kind: RemoteMCPServer
-metadata:
-  name: account-summary-tools
-  namespace: kagent
-spec:
-  url: http://account-summary-tools.bank-wiki.svc.cluster.local:8084/mcp
-  protocol: STREAMABLE_HTTP
-  description: "Account summary tools — generates brief customer account summaries"</code></pre>
-
-        <p>Apply the resource and verify:</p>
-        <pre><code>kubectl apply -f sample-agent/manifests/remote-mcp-server.yaml
-
-# Check the RemoteMCPServer status
-kubectl get remotemcpserver -n kagent account-summary-tools -o yaml
-
-# kagent will probe the /mcp endpoint — check that it shows Ready
-kubectl describe remotemcpserver -n kagent account-summary-tools</code></pre>
-      </div>
-
-      <!-- Step 5 -->
-      <div class="step">
-        <div class="step-number">5</div>
-        <h3>Create the Agent CRD</h3>
-        <p>
-          Now define the agent itself. Create
-          <code>sample-agent/manifests/agent.yaml</code> with a system prompt that instructs
-          the agent how to use your tool:
-        </p>
-        <pre><code>apiVersion: kagent.dev/v1alpha2
+    <!-- Expandable: the YAML -->
+    <details>
+      <summary>See the Kubernetes manifests</summary>
+      <div class="details-body">
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-filename"><span class="dot yaml"></span> sample-agent/manifests/agent.yaml</span>
+            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>apiVersion: kagent.dev/v1alpha2
 kind: Agent
 metadata:
-  name: bank-account-summary-agent
+  name: account-summary-agent
   namespace: kagent
 spec:
-  description: "Solo Bank — Account Summary Agent. Generates at-a-glance summaries for bank staff."
+  description: "Solo Bank — Account Summary Agent."
   type: Declarative
   declarative:
     modelConfig: anthropic-claude-sonnet
     systemMessage: |
-      You are an account summary assistant at Solo Bank. You help bank staff quickly
-      understand a customer's overall financial standing with a brief, readable summary.
-
-      When given a customer ID or name:
-      1. Use the get_account_summary tool to retrieve their summary data
-      2. Present the key facts in a clear, structured format
-      3. Highlight any risk indicators or flags that require attention
-      4. Keep the response concise — this is meant for a quick briefing, not a full review
-
-      Format your response as:
-      **Customer:** [Name] ([ID])
-      **Credit Score:** [score] | **Risk Level:** [level]
-      **Total Balance:** $[amount] across [N] accounts
-      **Summary:** [plain-language summary]
-      **Action Required:** [any flags or next steps, or "None"]
-
-      If the customer is not found, say so clearly and suggest verifying the Customer ID.
+      You are an account summary specialist at Solo Bank.
+      Use the get_account_summary tool to fetch customer data
+      and present it as a brief, structured summary.
     tools:
     - type: McpServer
       mcpServer:
         name: account-summary-tools
         kind: RemoteMCPServer</code></pre>
-
-        <p>Apply the agent:</p>
-        <pre><code>kubectl apply -f sample-agent/manifests/agent.yaml
-
-# Verify the agent was created
-kubectl get agents -n kagent bank-account-summary-agent
-
-# Check the agent's status and tool wiring
-kubectl describe agent -n kagent bank-account-summary-agent</code></pre>
+        </div>
+        <div class="code-block">
+          <div class="code-header">
+            <span class="code-filename"><span class="dot yaml"></span> sample-agent/manifests/remote-mcp-server.yaml</span>
+            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+          </div>
+          <pre><code>apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: account-summary-tools
+  namespace: kagent
+spec:
+  url: http://account-summary-tools.bank-wiki.svc.cluster.local:8085/mcp
+  protocol: STREAMABLE_HTTP</code></pre>
+        </div>
       </div>
+    </details>
 
-      <!-- Step 6 -->
-      <div class="step">
-        <div class="step-number">6</div>
-        <h3>Test Your Agent</h3>
-        <p>
-          Open the Management UI, select your new agent, and try it out:
-        </p>
-        <pre><code># Make sure the Management UI port-forward is running
-kubectl port-forward svc/solo-enterprise-ui -n kagent 8090:8090
-
-# Open in browser
-open http://localhost:8090</code></pre>
-
-        <p>
-          In the Management UI, select <strong>bank-account-summary-agent</strong> from the agent
-          dropdown and try these prompts:
-        </p>
-
-        <div class="prompt-example">Give me a summary for Maria Garcia</div>
-        <div class="prompt-example">Summarize account CUST-00042</div>
-        <div class="prompt-example">What's the overview for customer CUST-00003?</div>
-
-        <h3>Expected Output</h3>
-        <pre><code>**Customer:** Maria Garcia (CUST-00042)
-**Credit Score:** 742 | **Risk Level:** Low
-**Total Balance:** $28,450.00 across 3 accounts
-**Summary:** Maria is a long-standing customer (6 years) with good credit and
-healthy balances across checking, savings, and a CD account. No compliance concerns.
-**Action Required:** None</code></pre>
-
-        <p>You can also test the tool server directly without going through the agent:</p>
-        <pre><code># Direct MCP tool call via kubectl exec
-TOOL_POD=$(kubectl get pod -l app=account-summary-tools -n bank-wiki \
-  -o jsonpath='{.items[0].metadata.name}')
-
-kubectl exec "$TOOL_POD" -n bank-wiki -- wget -qO- \
-  --post-data='{"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_account_summary","arguments":{"customer_id":"CUST-00042"}},"id":1}' \
-  --header='Content-Type: application/json' \
-  http://localhost:8084/mcp | jq '.'</code></pre>
-      </div>
-
+    <div class="step-nav">
+      <div></div>
+      <button class="btn-nav btn-next" onclick="nextStep()">Next: Test It &#8594;</button>
     </div>
-
-    <!-- What's Next -->
-    <h2>What's Next</h2>
-    <p>
-      Congratulations — you've built and deployed a custom agent on the Solo.io AI Enterprise
-      Platform. Here are some ways to extend what you've built:
-    </p>
-
-    <div class="cards" style="margin-top: 16px;">
-      <div class="card">
-        <h3>Connect to Real Data</h3>
-        <p>
-          Replace the mock data in <code>generateSummary()</code> with real HTTP calls to the
-          <code>bank-customer-tools</code> MCP server. Use the service DNS:
-          <code>bank-customer-tools.bank-wiki.svc.cluster.local:8081/mcp</code>
-        </p>
-      </div>
-      <div class="card">
-        <h3>Add More Tools</h3>
-        <p>
-          Register additional functions on the same MCP server — for example,
-          <code>get_recent_alerts</code> or <code>get_product_recommendations</code>.
-          Each tool becomes callable by any agent that references your RemoteMCPServer.
-        </p>
-      </div>
-      <div class="card">
-        <h3>Register in AgentRegistry</h3>
-        <p>
-          Register your agent's skills and tools in AgentRegistry so they can be discovered
-          by other agents and tooling across the cluster. Use the REST API at NodePort 30121.
-        </p>
-      </div>
-    </div>
-
   </div>
+
+  <!-- ================================================================ -->
+  <!-- STEP 2: TEST                                                     -->
+  <!-- ================================================================ -->
+  <div class="step-panel" data-step="1">
+    <div class="step-header">
+      <h2>Step 2: Test the Agent</h2>
+      <p>Open the Management UI, select the agent, and ask it about a customer.</p>
+    </div>
+
+    <p>Open <a href="http://localhost:30090" target="_blank"><strong>http://localhost:30090</strong></a> (Management UI), select <strong>account-summary-agent</strong> from the dropdown, and try:</p>
+
+    <div class="prompts">
+      <div class="prompt-example">Give me a summary for Maria Garcia</div>
+      <div class="prompt-example">What's the overview for James Wilson?</div>
+      <div class="prompt-example">Summarize John Smith's accounts</div>
+    </div>
+
+    <h3 style="font-size: 1rem; margin-top: 28px;">What happens behind the scenes</h3>
+
+    <div class="arch-visual" style="padding: 20px;">
+      <div class="arch-row">
+        <div class="arch-node agent" style="min-width: 80px;">You</div>
+        <div style="color: #475569; align-self: center;">&#8594;</div>
+        <div class="arch-node agent" style="min-width: 140px;">account-summary-agent</div>
+        <div style="color: #475569; align-self: center;">&#8594;</div>
+        <div class="arch-node tool" style="min-width: 140px;">get_account_summary</div>
+        <div style="color: #475569; align-self: center;">&#8594;</div>
+        <div class="arch-node tool" style="min-width: 100px;">bank-wiki</div>
+      </div>
+      <div class="arch-label" style="margin-top: 10px;">Prompt &#8594; Agent &#8594; MCP Tool Call &#8594; Wiki Lookup &#8594; Structured Response</div>
+    </div>
+
+    <h3 style="font-size: 1rem; margin-top: 28px;">Expected Response</h3>
+
+    <div class="output-box">
+      <div class="output-header">
+        <div class="output-dots"><span></span><span></span><span></span></div>
+        <div class="output-title">account-summary-agent</div>
+      </div>
+      <div class="output-body"><span class="b">## Account Summary: Maria Garcia</span>
+
+- <strong>ID:</strong> CUST-00042
+- <strong>Credit Score:</strong> 742
+- <strong>Risk:</strong> Low
+- <strong>Employment:</strong> Senior Software Engineer at TechCorp
+
+<span class="b">### Balances</span>
+- Checking Balance: $4,280.50
+- Savings Balance: $18,920.00
+- CD Balance: $5,250.00
+
+No flags or compliance concerns. Long-standing customer (6 years).</div>
+    </div>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">&#128161;</div>
+      <div class="callout-body">
+        <strong>It's using real data</strong>
+        The agent calls the MCP tool server, which fetches the actual customer page from the
+        bank wiki. Try any customer name from the wiki &mdash; the response will reflect their
+        real profile data.
+      </div>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-nav btn-prev" onclick="prevStep()">&#8592; Back</button>
+      <button class="btn-nav btn-next danger" onclick="nextStep()">Next: Clean Up &#8594;</button>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- STEP 3: CLEAN UP                                                 -->
+  <!-- ================================================================ -->
+  <div class="step-panel" data-step="2">
+    <div class="step-header">
+      <h2>Step 3: Clean Up</h2>
+      <p>Remove everything the tutorial created. The rest of the Solo Bank demo stays untouched.</p>
+    </div>
+
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename"><span class="dot shell"></span> Run from the project root</span>
+        <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><code>./sample-agent/cleanup.sh</code></pre>
+    </div>
+
+    <div class="output-box">
+      <div class="output-header">
+        <div class="output-dots"><span></span><span></span><span></span></div>
+        <div class="output-title">Expected Output</div>
+      </div>
+      <div class="output-body"><span style="color:#f87171">&#9656; Deleting Agent CRD...</span>
+agent.kagent.dev "account-summary-agent" deleted
+
+<span style="color:#f87171">&#9656; Deleting RemoteMCPServer CRD...</span>
+remotemcpserver.kagent.dev "account-summary-tools" deleted
+
+<span style="color:#f87171">&#9656; Deleting Deployment and Service...</span>
+deployment.apps "account-summary-tools" deleted
+service "account-summary-tools" deleted
+
+<span style="color:#f87171">&#9656; Removing from AgentRegistry...</span>
+  <span class="g">[OK]</span> Removed from AgentRegistry
+
+<span class="g">============================================================</span>
+<span class="g">  Account Summary Agent removed.</span>
+<span class="g">============================================================</span></div>
+    </div>
+
+    <details>
+      <summary>What gets removed</summary>
+      <div class="details-body">
+        <ul>
+          <li><code>account-summary-agent</code> Agent CRD from <code>kagent</code> namespace</li>
+          <li><code>account-summary-tools</code> RemoteMCPServer CRD from <code>kagent</code> namespace</li>
+          <li><code>account-summary-tools</code> Deployment + Service from <code>bank-wiki</code> namespace</li>
+          <li>Agent and skill entries from AgentRegistry catalog</li>
+        </ul>
+        <p>The Docker image stays cached locally. The 7 original agents and 3 MCP servers are not affected.</p>
+      </div>
+    </details>
+
+    <!-- Done -->
+    <div class="done-banner">
+      <div style="font-size: 3rem;">&#127881;</div>
+      <h2>That's it.</h2>
+      <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto;">
+        You created a custom AI agent, connected it to real data via MCP, deployed it to Kubernetes,
+        and tested it live &mdash; then cleaned up with a single command.
+      </p>
+    </div>
+
+    <div class="step-nav">
+      <button class="btn-nav btn-prev" onclick="prevStep()">&#8592; Back</button>
+      <button class="btn-nav btn-next complete" onclick="markDone()">&#10003; Done</button>
+    </div>
+  </div>
+
 </div>
 
 <!-- Footer -->
 <footer>
   <div class="container">
-    <p>Powered by <strong>Solo.io</strong> — AI Enterprise Platform for Kubernetes</p>
+    <p>Powered by <strong>Solo.io</strong> &mdash; AI Enterprise Platform for Kubernetes</p>
     <div class="footer-versions">
-      <div class="footer-version-item">
-        <div class="version-dot"></div>
-        kagent Enterprise v0.3.14
-      </div>
-      <div class="footer-version-item">
-        <div class="version-dot"></div>
-        Management UI v0.3.14
-      </div>
-      <div class="footer-version-item">
-        <div class="version-dot"></div>
-        AgentRegistry OSS v0.3.3
-      </div>
-      <div class="footer-version-item">
-        <div class="version-dot"></div>
-        Kind v0.20+
-      </div>
+      <div class="footer-version-item"><div class="version-dot"></div>kagent Enterprise v0.3.14</div>
+      <div class="footer-version-item"><div class="version-dot"></div>Management UI v0.3.14</div>
+      <div class="footer-version-item"><div class="version-dot"></div>AgentRegistry OSS v0.3.3</div>
+      <div class="footer-version-item"><div class="version-dot"></div>Go MCP SDK v1.4.0</div>
     </div>
   </div>
 </footer>
+
+<script>
+let cur = 0;
+const total = 3;
+const done = new Set();
+
+function update() {
+  document.querySelectorAll('.stepper-step').forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (i === cur) el.classList.add('active');
+    else if (done.has(i)) el.classList.add('done');
+  });
+  const bar = document.getElementById('stepper-progress');
+  const w = document.querySelector('.stepper').offsetWidth * 0.5;
+  bar.style.width = (cur / (total - 1) * w) + 'px';
+  document.querySelectorAll('.step-panel').forEach((el, i) => {
+    el.classList.toggle('active', i === cur);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goToStep(s) {
+  if (s >= 0 && s < total) { if (cur < s) done.add(cur); cur = s; update(); }
+}
+function nextStep() { done.add(cur); if (cur < total - 1) { cur++; update(); } }
+function prevStep() { if (cur > 0) { cur--; update(); } }
+function markDone() { for (let i = 0; i < total; i++) done.add(i); update(); }
+
+function copyCode(btn) {
+  const code = btn.closest('.code-block').querySelector('code').textContent;
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+update();
+</script>
 
 </body>
 </html>

@@ -56,7 +56,12 @@ func (c *WikiClient) GetPage(pagePath string) (string, error) {
 }
 
 func (c *WikiClient) Search(query string) ([]SearchResult, error) {
-	resp, err := c.httpClient.Get(fmt.Sprintf("%s/search?q=%s", c.baseURL, url.QueryEscape(query)))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/search?q=%s", c.baseURL, url.QueryEscape(query)), nil)
+	if err != nil {
+		return nil, fmt.Errorf("search request failed: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("search request failed: %w", err)
 	}
@@ -69,7 +74,12 @@ func (c *WikiClient) Search(query string) ([]SearchResult, error) {
 }
 
 func (c *WikiClient) ListPages(category string) ([]PageEntry, error) {
-	resp, err := c.httpClient.Get(fmt.Sprintf("%s/wiki/%s", c.baseURL, category))
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/wiki/%s", c.baseURL, category), nil)
+	if err != nil {
+		return nil, fmt.Errorf("list request failed: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("list request failed: %w", err)
 	}

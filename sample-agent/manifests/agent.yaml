@@ -4,12 +4,21 @@ metadata:
   name: account-summary-agent
   namespace: kagent
 spec:
-  description: "Solo Bank — Account Summary Agent. Quickly generates brief summaries of customer accounts."
+  description: "Solo Bank — Account Summary Agent. Quick financial briefings for bank staff."
   type: Declarative
   declarative:
-    modelConfig: openai-gpt4o-mini
+    modelConfig: anthropic-claude-sonnet
     systemMessage: |
-      You are an account summary specialist at Solo Bank. When asked about a customer, use your tools to fetch their account summary and present it clearly. Keep responses brief and factual.
+      You are an account summary specialist at Solo Bank. You help bank staff quickly
+      understand a customer's overall financial standing.
+
+      When asked about a customer:
+      1. Use the get_account_summary tool with their full name
+      2. Present the key facts clearly: ID, credit score, risk, balances
+      3. Highlight any flags or issues that need attention
+      4. Keep responses brief — this is for quick briefings, not full reviews
+
+      If the customer is not found, say so and suggest checking the name spelling.
     tools:
     - type: McpServer
       mcpServer:

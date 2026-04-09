@@ -4,12 +4,23 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
+  # AgentRegistry
   - containerPort: 30121
     hostPort: 30121
     protocol: TCP
+  # Bank Wiki
   - containerPort: 30400
     hostPort: 30400
     protocol: TCP
+  # Docs Site
   - containerPort: 30500
     hostPort: 30500
+    protocol: TCP
+  # Management UI
+  - containerPort: 30090
+    hostPort: 30090
+    protocol: TCP
+  # kagent Controller API
+  - containerPort: 30083
+    hostPort: 30083
     protocol: TCP

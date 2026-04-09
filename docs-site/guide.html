@@ -39,11 +39,11 @@
     <h2>Getting Started</h2>
     <p>
       The Solo Bank demo runs entirely inside a local Kind cluster named <code>solo-bank-demo</code>.
-      Some services are exposed via NodePort (no port-forward needed), and others require
-      <code>kubectl port-forward</code> to access from your browser or terminal.
+      All services are exposed via NodePort — no port-forwarding needed.
+      Just run <code>./setup.sh</code> and everything is instantly accessible.
     </p>
 
-    <h3>Direct Access (NodePort — no port-forward needed)</h3>
+    <h3>All Services</h3>
     <div class="table-wrapper">
       <table>
         <thead>
@@ -55,34 +55,33 @@
         </thead>
         <tbody>
           <tr>
+            <td><strong>Management UI</strong></td>
+            <td><code>http://localhost:30090</code></td>
+            <td>kagent management dashboard — chat with agents here</td>
+          </tr>
+          <tr>
             <td><strong>AgentRegistry</strong></td>
             <td><code>http://localhost:30121</code></td>
             <td>Skill catalog REST API</td>
+          </tr>
+          <tr>
+            <td><strong>Bank Wiki</strong></td>
+            <td><code>http://localhost:30400</code></td>
+            <td>Bank wiki server (customer, policy, rate data)</td>
           </tr>
           <tr>
             <td><strong>Docs Site</strong></td>
             <td><code>http://localhost:30500</code></td>
             <td>This documentation site</td>
           </tr>
+          <tr>
+            <td><strong>kagent API</strong></td>
+            <td><code>http://localhost:30083</code></td>
+            <td>Agent runtime API (controller)</td>
+          </tr>
         </tbody>
       </table>
     </div>
-
-    <h3>Port-Forward Commands (Management UI, kagent API, and Bank Wiki)</h3>
-    <p>Run each command in a separate terminal and keep them running while you use the UI:</p>
-
-    <pre><code># Management UI — kagent management dashboard
-kubectl port-forward svc/solo-enterprise-ui -n kagent 8090:8090
-
-# Then open: http://localhost:8090
-
-# kagent API — agent runtime API
-kubectl port-forward svc/kagent-controller -n kagent 8083:8083
-
-# Bank Wiki Server — direct API access
-kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080
-
-# Then open: http://localhost:8080/health</code></pre>
 
     <div class="callout callout-info">
       <div class="callout-icon">ℹ️</div>
@@ -99,7 +98,7 @@ kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080
     <h2>Talking to the Triage Agent</h2>
     <p>
       The Triage Agent (<code>bank-triage-agent</code>) is the front door to the Solo Bank system.
-      Open the Management UI at <code>http://localhost:8090</code>, select
+      Open the Management UI at <code>http://localhost:30090</code>, select
       <strong>bank-triage-agent</strong> from the agent dropdown, and type your request.
     </p>
     <p>
@@ -139,6 +138,21 @@ kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080
             <td>Suspicious activity, fraud report</td>
             <td><span class="badge badge-agent">Customer Service Agent</span></td>
             <td>Compliance is internal only; CS handles escalation</td>
+          </tr>
+          <tr>
+            <td>IT issues, system outages, access problems</td>
+            <td><span class="badge badge-agent">IT Support Agent</span></td>
+            <td>Handles internal tickets and troubleshooting</td>
+          </tr>
+          <tr>
+            <td>Cluster health, pod issues, service connectivity</td>
+            <td><span class="badge badge-agent">Kubernetes Agent</span></td>
+            <td>Internal/DevOps only</td>
+          </tr>
+          <tr>
+            <td>Helm upgrades, chart configuration, rollbacks</td>
+            <td><span class="badge badge-agent">Helm Agent</span></td>
+            <td>Internal/DevOps only</td>
           </tr>
           <tr>
             <td>Ambiguous requests</td>
@@ -290,6 +304,52 @@ Recommendation: Approve at 6.625% with standard 20% down payment.</code></pre>
     <div class="prompt-example">Check whether CUST-00042 is receiving the correct mortgage rate for their credit tier</div>
     <div class="prompt-example">Run a compliance audit across all customers with international wire transfers</div>
 
+    <!-- IT Support Agent -->
+    <h2>Using the IT Support Agent</h2>
+    <p>
+      The IT Support Agent (<code>bank-it-agent</code>) handles internal IT tickets, system
+      troubleshooting, and cross-team coordination. It has access to all three MCP servers
+      (customer, transaction, and policy tools) to verify system functionality and diagnose issues.
+      Powered by <strong>Claude Sonnet</strong>.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">A customer reports they can't see their account balance — investigate</div>
+    <div class="prompt-example">Rate quotes seem wrong for credit tier "Good" — check policy-tools</div>
+    <div class="prompt-example">New employee needs system access — guide through OIDC and RBAC setup</div>
+    <div class="prompt-example">Transaction searches are returning errors — diagnose the issue</div>
+
+    <!-- Kubernetes Agent -->
+    <h2>Using the Kubernetes Agent</h2>
+    <p>
+      The Kubernetes Agent (<code>bank-k8s-agent</code>) is an <strong>internal/DevOps-only</strong>
+      agent that provides infrastructure guidance. It knows the Solo Bank cluster architecture,
+      including namespaces, services, ports, and dependencies. No MCP tools — pure knowledge-based
+      advisory. Powered by <strong>Claude Sonnet</strong>.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">What services are running in the bank-wiki namespace?</div>
+    <div class="prompt-example">How do I troubleshoot a failing MCP tool server connection?</div>
+    <div class="prompt-example">What are the NodePort mappings for this cluster?</div>
+    <div class="prompt-example">Explain how KMCP connects agents to remote MCP servers</div>
+
+    <!-- Helm Agent -->
+    <h2>Using the Helm Agent</h2>
+    <p>
+      The Helm Agent (<code>bank-helm-agent</code>) is an <strong>internal/DevOps-only</strong>
+      agent specializing in Helm release management. It knows all Solo Bank Helm releases
+      (kagent-enterprise, management UI, CRDs) and can advise on upgrades, rollbacks, and
+      configuration. No MCP tools — pure knowledge-based advisory.
+      Powered by <strong>Claude Sonnet</strong>.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">What Helm releases are installed and what versions?</div>
+    <div class="prompt-example">How do I upgrade kagent-enterprise to a new version?</div>
+    <div class="prompt-example">What's the correct install order for the Helm charts?</div>
+    <div class="prompt-example">How do I roll back the management UI if an upgrade fails?</div>
+
     <!-- Management UI -->
     <h2>Using the Management UI</h2>
     <p>
@@ -298,11 +358,8 @@ Recommendation: Approve at 6.625% with standard 20% down payment.</code></pre>
     </p>
 
     <h3>How to Access the Management UI</h3>
-    <pre><code># Start the port-forward (keep this terminal open)
-kubectl port-forward svc/solo-enterprise-ui -n kagent 8090:8090
-
-# Open in browser
-open http://localhost:8090</code></pre>
+    <pre><code># Open in browser — no port-forward needed
+open http://localhost:30090</code></pre>
 
     <h3>What the Management UI Provides</h3>
     <ul>
@@ -327,35 +384,21 @@ open http://localhost:8090</code></pre>
     <p>
       The Bank Wiki server hosts all policy documents, rate tables, and KYC/AML guidelines
       referenced by the Mortgage Advisor and Compliance agents. You can query it directly
-      using <code>kubectl exec</code> or via port-forward.
+      directly from your browser at <code>http://localhost:30400</code> or via <code>curl</code>.
     </p>
 
     <h3>Health Check</h3>
-    <pre><code>WIKI_POD=$(kubectl get pod -l app=bank-wiki-server -n bank-wiki \
-  -o jsonpath='{.items[0].metadata.name}')
-
-kubectl exec "$WIKI_POD" -n bank-wiki -- wget -qO- http://localhost:8080/health</code></pre>
-
-    <h3>List All Documents</h3>
-    <pre><code>kubectl exec "$WIKI_POD" -n bank-wiki -- \
-  wget -qO- http://localhost:8080/api/documents | jq '.documents[].title'</code></pre>
+    <pre><code>curl http://localhost:30400/health</code></pre>
 
     <h3>Search the Wiki</h3>
     <pre><code># Search for AML-related policies
-kubectl exec "$WIKI_POD" -n bank-wiki -- \
-  wget -qO- "http://localhost:8080/api/search?q=AML" | jq '.'
+curl -s "http://localhost:30400/search?q=AML" -H "Accept: application/json" | jq '.'
 
 # Search for mortgage rate tables
-kubectl exec "$WIKI_POD" -n bank-wiki -- \
-  wget -qO- "http://localhost:8080/api/search?q=mortgage+rates" | jq '.'</code></pre>
+curl -s "http://localhost:30400/search?q=mortgage+rates" -H "Accept: application/json" | jq '.'
 
-    <h3>Port-Forward Alternative</h3>
-    <pre><code># Port-forward the wiki server
-kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080
-
-# Then use curl from your local machine
-curl http://localhost:8080/api/search?q=credit-score-tiers
-curl http://localhost:8080/api/documents/lending-policy-2025</code></pre>
+# Browse all customers
+curl -s "http://localhost:30400/wiki/customers/" -H "Accept: application/json" | jq '.[].name'</code></pre>
 
     <h3>Available Wiki Endpoints</h3>
     <div class="table-wrapper">

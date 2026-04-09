@@ -40,140 +40,136 @@ type GetCustomerAccountsArgs struct {
 	CustomerID string `json:"customer_id" jsonschema:"Customer ID to retrieve accounts for (required, e.g. CUST-00001)"`
 }
 
-func handleGetTransactionHistory(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetTransactionHistoryArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleGetTransactionHistory(ctx context.Context, req *mcp.CallToolRequest, args GetTransactionHistoryArgs) (*mcp.CallToolResult, any, error) {
 	if args.AccountID == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "account_id is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	results, err := wikiClient.Search(args.AccountID)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search error: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	for _, r := range results {
 		if strings.HasPrefix(r.Path, "customers/") {
 			content, err := wikiClient.GetPage(r.Path)
 			if err == nil {
-				return &mcp.CallToolResultFor[any]{
+				return &mcp.CallToolResult{
 					Content: []mcp.Content{&mcp.TextContent{Text: content}},
-				}, nil
+				}, nil, nil
 			}
 		}
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("no transaction history found for account ID: %s", args.AccountID)}},
 		IsError: true,
-	}, nil
+	}, nil, nil
 }
 
-func handleSearchTransactions(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[SearchTransactionsArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleSearchTransactions(ctx context.Context, req *mcp.CallToolRequest, args SearchTransactionsArgs) (*mcp.CallToolResult, any, error) {
 	if args.CustomerID == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "customer_id is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	results, err := wikiClient.Search(args.CustomerID)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search error: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	for _, r := range results {
 		if strings.HasPrefix(r.Path, "customers/") {
 			content, err := wikiClient.GetPage(r.Path)
 			if err == nil {
-				return &mcp.CallToolResultFor[any]{
+				return &mcp.CallToolResult{
 					Content: []mcp.Content{&mcp.TextContent{Text: content}},
-				}, nil
+				}, nil, nil
 			}
 		}
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("no transactions found for customer ID: %s", args.CustomerID)}},
 		IsError: true,
-	}, nil
+	}, nil, nil
 }
 
-func handleGetAccountDetails(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetAccountDetailsArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleGetAccountDetails(ctx context.Context, req *mcp.CallToolRequest, args GetAccountDetailsArgs) (*mcp.CallToolResult, any, error) {
 	if args.AccountID == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "account_id is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	results, err := wikiClient.Search(args.AccountID)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search error: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	for _, r := range results {
 		if strings.HasPrefix(r.Path, "customers/") {
 			content, err := wikiClient.GetPage(r.Path)
 			if err == nil {
-				return &mcp.CallToolResultFor[any]{
+				return &mcp.CallToolResult{
 					Content: []mcp.Content{&mcp.TextContent{Text: content}},
-				}, nil
+				}, nil, nil
 			}
 		}
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("no account details found for account ID: %s", args.AccountID)}},
 		IsError: true,
-	}, nil
+	}, nil, nil
 }
 
-func handleGetCustomerAccounts(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetCustomerAccountsArgs]) (*mcp.CallToolResultFor[any], error) {
-	args := params.Arguments
+func handleGetCustomerAccounts(ctx context.Context, req *mcp.CallToolRequest, args GetCustomerAccountsArgs) (*mcp.CallToolResult, any, error) {
 	if args.CustomerID == "" {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: "customer_id is required"}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	results, err := wikiClient.Search(args.CustomerID)
 	if err != nil {
-		return &mcp.CallToolResultFor[any]{
+		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("search error: %v", err)}},
 			IsError: true,
-		}, nil
+		}, nil, nil
 	}
 
 	for _, r := range results {
 		if strings.HasPrefix(r.Path, "customers/") {
 			content, err := wikiClient.GetPage(r.Path)
 			if err == nil {
-				return &mcp.CallToolResultFor[any]{
+				return &mcp.CallToolResult{
 					Content: []mcp.Content{&mcp.TextContent{Text: content}},
-				}, nil
+				}, nil, nil
 			}
 		}
 	}
 
-	return &mcp.CallToolResultFor[any]{
+	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("no accounts found for customer ID: %s", args.CustomerID)}},
 		IsError: true,
-	}, nil
+	}, nil, nil
 }
 
 func main() {

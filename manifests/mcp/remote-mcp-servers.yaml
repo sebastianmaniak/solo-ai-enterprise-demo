@@ -6,7 +6,7 @@ metadata:
 spec:
   url: http://bank-customer-tools.bank-wiki.svc.cluster.local:8081/mcp
   protocol: STREAMABLE_HTTP
-  description: "Solo Bank customer data tools — lookup, search, account balances, transaction history"
+  description: "Solo Bank customer data tools — lookup, search, account balances"
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer

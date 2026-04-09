@@ -53,7 +53,7 @@
 │  │                                                                         │ │
 │  │   ┌──────────────────────────────────────────────────────────────┐    │ │
 │  │   │  kagent-enterprise (controller + KMCP)                        │    │ │
-│  │   │  Port-forward: 8083 (API)                                     │    │ │
+│  │   │  NodePort: 30083 (API)                                         │    │ │
 │  │   │                                                               │    │ │
 │  │   │  ┌──────────────────┐  ┌──────────────────────────────────┐  │    │ │
 │  │   │  │ bank-triage-agent│  │  bank-customer-service-agent     │  │    │ │
@@ -66,11 +66,17 @@
 │  │   │  │ Claude Sonnet             │  │ Claude Sonnet           │  │    │ │
 │  │   │  │ → customer, policy tools  │  │ → all 3 MCP servers     │  │    │ │
 │  │   │  └───────────────────────────┘  └─────────────────────────┘  │    │ │
+│  │   │                                                               │    │ │
+│  │   │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────┐ │    │ │
+│  │   │  │ bank-k8s-agent   │  │ bank-helm-agent  │  │ bank-it    │ │    │ │
+│  │   │  │ Claude Sonnet    │  │ Claude Sonnet    │  │  -agent    │ │    │ │
+│  │   │  │ no tools         │  │ no tools         │  │ → all 3    │ │    │ │
+│  │   │  └──────────────────┘  └──────────────────┘  └────────────┘ │    │ │
 │  │   └──────────────────────────────────────────────────────────────┘    │ │
 │  │                                                                         │ │
 │  │   ┌──────────────────────────────────────────────────────────────┐    │ │
 │  │   │  solo-enterprise-ui (Management UI)                           │    │ │
-│  │   │  Port-forward: 8090                                           │    │ │
+│  │   │  NodePort: 30090                                               │    │ │
 │  │   └──────────────────────────────────────────────────────────────┘    │ │
 │  │                                                                         │ │
 │  │   CRDs: Agent, ModelConfig, RemoteMCPServer                            │ │
@@ -104,10 +110,12 @@
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-External Access:
+External Access (all NodePort — no port-forward needed):
+  NodePort 30090 → Management UI (chat with agents)
   NodePort 30121 → AgentRegistry (skill catalog API)
+  NodePort 30400 → Bank Wiki (customer/policy data)
   NodePort 30500 → Docs Site (this site)
-  Port-forward  → Management UI (8090), kagent API (8083)</pre>
+  NodePort 30083 → kagent API (controller)</pre>
     </div>
 
     <!-- Namespaces -->
@@ -157,7 +165,7 @@ External Access:
         <div class="step-number">1</div>
         <h3>User Sends a Prompt</h3>
         <p>
-          The user opens the Management UI (<code>http://localhost:8090</code>), selects an agent
+          The user opens the Management UI (<code>http://localhost:30090</code>), selects an agent
           (e.g., <code>bank-customer-service-agent</code>), and types a message such as
           "I'm John Smith, what's my balance?"
         </p>
@@ -225,7 +233,7 @@ External Access:
           <tr>
             <td><strong>kagent Enterprise</strong></td>
             <td>v0.3.14</td>
-            <td>Helm chart: <code>oci://ghcr.io/kagent-dev/kagent/helm/kagent</code></td>
+            <td>Helm chart: <code>oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise</code></td>
             <td>Enterprise edition with KMCP</td>
           </tr>
           <tr>
@@ -237,14 +245,14 @@ External Access:
           <tr>
             <td><strong>AgentRegistry</strong></td>
             <td>OSS v0.3.3</td>
-            <td>Helm chart: <code>oci://ghcr.io/solo-io/agentregistry/helm/agentregistry</code></td>
+            <td>Helm chart: <code>oci://ghcr.io/agentregistry-dev/agentregistry/charts/agentregistry</code></td>
             <td>Open-source; no license required</td>
           </tr>
           <tr>
             <td><strong>Kind</strong></td>
             <td>v0.20+</td>
             <td>Local cluster</td>
-            <td>Single-node; ports 30121, 30500 mapped</td>
+            <td>Single-node; ports 30121, 30400, 30500 mapped</td>
           </tr>
           <tr>
             <td><strong>Claude Sonnet</strong></td>

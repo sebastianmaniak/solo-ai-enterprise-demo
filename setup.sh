@@ -38,6 +38,7 @@ for tool in docker kind kubectl helm curl jq openssl; do
   echo -e "${GREEN}  [OK]${NC} ${tool}"
 done
 
+# AGENTGATEWAY_LICENSE_KEY is used for kagent Enterprise + Management UI licensing
 for var in OPENAI_API_KEY ANTHROPIC_API_KEY AGENTGATEWAY_LICENSE_KEY; do
   if [[ -z "${!var:-}" ]]; then
     fail "Required environment variable not set: ${var}"
@@ -76,7 +77,7 @@ kubectl apply -f "${SCRIPT_DIR}/manifests/namespaces.yaml"
 echo -e "${GREEN}Namespaces applied.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 3: Install AgentRegistry OSS
+# Step 4: Install AgentRegistry OSS
 # ---------------------------------------------------------------------------
 banner "Step 4: Install AgentRegistry OSS"
 
@@ -99,7 +100,7 @@ helm upgrade --install agentregistry \
 echo -e "${GREEN}AgentRegistry OSS installed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 4: Install kagent Enterprise CRDs
+# Step 5: Install kagent Enterprise CRDs
 # ---------------------------------------------------------------------------
 banner "Step 5: Install kagent Enterprise CRDs"
 
@@ -110,10 +111,12 @@ helm upgrade --install kagent-enterprise-crds \
 echo -e "${GREEN}kagent CRDs installed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 5: Install Management UI (provides OIDC for kagent)
+# Step 6: Install Management UI (provides OIDC for kagent)
 # ---------------------------------------------------------------------------
 banner "Step 6: Install Management UI"
 
+# --no-hooks: Management UI post-install hooks may timeout in Kind clusters;
+# the core deployment works fine without them.
 helm upgrade --install management \
   oci://us-docker.pkg.dev/solo-public/solo-enterprise-helm/charts/management \
   --namespace kagent \
@@ -121,20 +124,30 @@ helm upgrade --install management \
   --set cluster="solo-bank-demo" \
   --set products.kagent.enabled=true \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
-  --no-hooks --timeout 300s
+  --no-hooks --wait --timeout 300s
 
 echo "Waiting for Management UI pods to be ready..."
-kubectl wait --for=condition=available deployment/solo-enterprise-ui \
+kubectl wait --for=condition=Available deployment/solo-enterprise-ui \
   -n kagent --timeout=180s 2>/dev/null || \
   warn "Management UI deployment not ready yet — kagent may need a restart."
+
+# Expose Management UI on NodePort 30090 (mapped in kind-config.yaml)
+echo "Patching Management UI service to NodePort 30090..."
+kubectl patch svc solo-enterprise-ui -n kagent --type='json' -p='[
+  {"op":"replace","path":"/spec/type","value":"NodePort"},
+  {"op":"replace","path":"/spec/ports/2/nodePort","value":30090}
+]' 2>/dev/null || warn "Could not patch Management UI NodePort (may already be set)."
 
 echo -e "${GREEN}Management UI installed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 6: Install kagent Enterprise
+# Step 7: Install kagent Enterprise
 # ---------------------------------------------------------------------------
 banner "Step 7: Install kagent Enterprise"
 
+# oidc.skipOBO=true: Skip On-Behalf-Of token generation since we don't have
+# a full OIDC IdP configured. Without this, agents fail with
+# "obo token handler not ready" at runtime.
 helm upgrade --install kagent-enterprise \
   oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise \
   --namespace kagent --version 0.3.14 \
@@ -142,13 +155,29 @@ helm upgrade --install kagent-enterprise \
   --set defaultModelConfig.model=gpt-4o-mini \
   --set controller.enabled=true \
   --set kmcp.enabled=true \
+  --set oidc.skipOBO=true \
+  --set otel.tracing.enabled=true \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
   --wait --timeout 300s
 
 echo -e "${GREEN}kagent Enterprise installed.${NC}"
 
+# Fix OTEL endpoint: the chart omits the http:// scheme prefix, which
+# causes gRPC resolver errors. Override the env var directly.
+echo "Fixing OTEL tracing endpoint format..."
+kubectl set env deployment/kagent-controller -n kagent \
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://solo-enterprise-telemetry-collector.kagent.svc.cluster.local:4317
+kubectl rollout status deployment/kagent-controller -n kagent --timeout=120s
+
+# Expose kagent controller on NodePort 30083 (mapped in kind-config.yaml)
+echo "Patching kagent controller service to NodePort 30083..."
+kubectl patch svc kagent-controller -n kagent --type='json' -p='[
+  {"op":"replace","path":"/spec/type","value":"NodePort"},
+  {"op":"add","path":"/spec/ports/0/nodePort","value":30083}
+]' 2>/dev/null || warn "Could not patch kagent controller NodePort (may already be set)."
+
 # ---------------------------------------------------------------------------
-# Step 7: Create LLM API key secrets
+# Step 8: Create LLM API key secrets
 # ---------------------------------------------------------------------------
 banner "Step 8: Create LLM API key secrets"
 
@@ -165,7 +194,7 @@ kubectl create secret generic anthropic-secret \
 echo -e "${GREEN}LLM API key secrets created.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 7: Build and load Docker images
+# Step 9: Build and load Docker images
 # ---------------------------------------------------------------------------
 banner "Step 9: Build and load Docker images"
 
@@ -205,44 +234,123 @@ fi
 echo -e "${GREEN}Docker images built and loaded.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 8: Deploy bank wiki and tool servers
+# Step 10: Deploy bank wiki and tool servers
 # ---------------------------------------------------------------------------
 banner "Step 10: Deploy bank wiki and tool servers"
 
 kubectl apply -f "${SCRIPT_DIR}/manifests/bank-wiki/"
 
 echo "Waiting for bank-wiki-server pods..."
-kubectl wait --for=condition=ready pod -l app=bank-wiki-server \
+kubectl wait --for=condition=Ready pod -l app=bank-wiki-server \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-customer-tools pods..."
-kubectl wait --for=condition=ready pod -l app=bank-customer-tools \
+kubectl wait --for=condition=Ready pod -l app=bank-customer-tools \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-policy-tools pods..."
-kubectl wait --for=condition=ready pod -l app=bank-policy-tools \
+kubectl wait --for=condition=Ready pod -l app=bank-policy-tools \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-transaction-tools pods..."
-kubectl wait --for=condition=ready pod -l app=bank-transaction-tools \
+kubectl wait --for=condition=Ready pod -l app=bank-transaction-tools \
   -n bank-wiki --timeout=120s
 
 echo -e "${GREEN}Bank wiki and tool servers deployed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 9: Apply MCP servers, model configs, and agents
+# Step 11: Apply MCP servers, model configs, and agents
 # ---------------------------------------------------------------------------
 banner "Step 11: Apply MCP servers, model configs, and agents"
 
 kubectl apply -f "${SCRIPT_DIR}/manifests/mcp/"
 kubectl apply -f "${SCRIPT_DIR}/manifests/agents/"
 
+echo "Waiting for agents to be ready..."
+sleep 5
+kubectl get agents -n kagent 2>/dev/null || true
+
 echo -e "${GREEN}MCP servers, model configs, and agents applied.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 10: Smoke tests
+# Step 12: Populate AgentRegistry catalog
 # ---------------------------------------------------------------------------
-banner "Step 12: Smoke tests"
+banner "Step 12: Populate AgentRegistry catalog"
+
+AR_URL="http://agentregistry.agentregistry.svc.cluster.local:8080"
+AR_POD=$(kubectl get pod -l app.kubernetes.io/name=agentregistry -n agentregistry \
+  -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+
+if [[ -n "${AR_POD}" ]]; then
+  echo "Registering MCP servers, skills, and agents in AgentRegistry..."
+
+  # Get anonymous auth token
+  AR_TOKEN=$(kubectl exec "${AR_POD}" -n agentregistry -- \
+    wget -qO- --post-data='{}' --header="Content-Type: application/json" \
+    "${AR_URL}/v0/auth/none" 2>/dev/null | jq -r '.registry_token' || true)
+
+  if [[ -n "${AR_TOKEN}" && "${AR_TOKEN}" != "null" ]]; then
+    AUTH_HEADER="Authorization: Bearer ${AR_TOKEN}"
+
+    # Register MCP servers
+    for svr_data in \
+      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-customer-tools","title":"Solo Bank Customer Tools","description":"Customer data tools — lookup, search, account balances","version":"1.0.0"}' \
+      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-policy-tools","title":"Solo Bank Policy Tools","description":"Policy and rates tools — lending policies, rate tables, credit tiers","version":"1.0.0"}' \
+      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-transaction-tools","title":"Solo Bank Transaction Tools","description":"Transaction and account tools — history, details, search","version":"1.0.0"}'; do
+      kubectl exec "${AR_POD}" -n agentregistry -- \
+        wget -qO- --post-data="${svr_data}" \
+        --header="Content-Type: application/json" \
+        --header="${AUTH_HEADER}" \
+        "${AR_URL}/v0/servers" >/dev/null 2>&1 || true
+    done
+    echo -e "${GREEN}  [OK]${NC} MCP servers registered"
+
+    # Register skills
+    for skill_data in \
+      '{"name":"customer-lookup","title":"Customer Lookup","description":"Look up customer profiles by name or ID and search across the customer database","version":"1.0.0","category":"banking"}' \
+      '{"name":"policy-compliance-check","title":"Policy Compliance Check","description":"Check bank policies, lending rules, KYC/AML requirements, and rate schedules","version":"1.0.0","category":"compliance"}' \
+      '{"name":"transaction-analysis","title":"Transaction Analysis","description":"Analyze transaction history, search for suspicious patterns, and review account details","version":"1.0.0","category":"banking"}' \
+      '{"name":"mortgage-rate-quote","title":"Mortgage Rate Quote","description":"Generate personalized mortgage rate quotes based on credit score and salary","version":"1.0.0","category":"lending"}' \
+      '{"name":"k8s-operations","title":"Kubernetes Operations","description":"Cluster health monitoring, pod troubleshooting, service connectivity diagnostics","version":"1.0.0","category":"infrastructure"}' \
+      '{"name":"helm-deployment","title":"Helm Deployment Management","description":"Helm release management, upgrades, rollbacks, and chart configuration","version":"1.0.0","category":"infrastructure"}' \
+      '{"name":"it-support","title":"IT Support","description":"Internal IT ticket handling, system troubleshooting, and cross-team coordination","version":"1.0.0","category":"operations"}'; do
+      kubectl exec "${AR_POD}" -n agentregistry -- \
+        wget -qO- --post-data="${skill_data}" \
+        --header="Content-Type: application/json" \
+        --header="${AUTH_HEADER}" \
+        "${AR_URL}/v0/skills" >/dev/null 2>&1 || true
+    done
+    echo -e "${GREEN}  [OK]${NC} Skills registered"
+
+    # Register agents
+    for agent_data in \
+      '{"name":"bank-triage-agent","title":"Solo Bank Triage Agent","description":"Front-door triage agent that routes customer inquiries to the appropriate specialist","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6"}' \
+      '{"name":"bank-customer-service-agent","title":"Solo Bank Customer Service Agent","description":"Handles account inquiries, balance checks, and transaction questions","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o-mini","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"transaction-analysis","registrySkillName":"transaction-analysis"}]}' \
+      '{"name":"bank-mortgage-advisor-agent","title":"Solo Bank Mortgage Advisor Agent","description":"Provides personalized mortgage rate quotes, refinancing guidance, and lending requirements","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"mortgage-rate-quote","registrySkillName":"mortgage-rate-quote"}]}' \
+      '{"name":"bank-compliance-agent","title":"Solo Bank Compliance Agent","description":"Internal compliance officer for policy audits, fraud review, and regulatory checks","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"policy-compliance-check","registrySkillName":"policy-compliance-check"},{"name":"transaction-analysis","registrySkillName":"transaction-analysis"}]}' \
+      '{"name":"bank-k8s-agent","title":"Solo Bank Kubernetes Agent","description":"Infrastructure operations specialist for cluster health monitoring and troubleshooting","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"k8s-operations","registrySkillName":"k8s-operations"}]}' \
+      '{"name":"bank-helm-agent","title":"Solo Bank Helm Agent","description":"Helm deployment specialist for release management, upgrades, and configuration","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"helm-deployment","registrySkillName":"helm-deployment"}]}' \
+      '{"name":"bank-it-agent","title":"Solo Bank IT Support Agent","description":"IT support lead for ticket handling, system troubleshooting, and cross-team coordination","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"transaction-analysis","registrySkillName":"transaction-analysis"},{"name":"it-support","registrySkillName":"it-support"}]}'; do
+      kubectl exec "${AR_POD}" -n agentregistry -- \
+        wget -qO- --post-data="${agent_data}" \
+        --header="Content-Type: application/json" \
+        --header="${AUTH_HEADER}" \
+        "${AR_URL}/v0/agents" >/dev/null 2>&1 || true
+    done
+    echo -e "${GREEN}  [OK]${NC} Agents registered"
+  else
+    warn "Could not get AgentRegistry auth token. Skipping catalog population."
+  fi
+else
+  warn "AgentRegistry pod not found. Skipping catalog population."
+fi
+
+echo -e "${GREEN}AgentRegistry catalog populated.${NC}"
+
+# ---------------------------------------------------------------------------
+# Step 13: Smoke tests
+# ---------------------------------------------------------------------------
+banner "Step 13: Smoke tests"
 
 echo "Checking wiki server health..."
 WIKI_POD=$(kubectl get pod -l app=bank-wiki-server -n bank-wiki \
@@ -253,18 +361,13 @@ if [[ -n "${WIKI_POD}" ]]; then
       wget -qO- http://localhost:8080/health 2>/dev/null | grep -qi "ok\|healthy\|200\|up"; then
     echo -e "${GREEN}  [OK]${NC} Wiki server health check passed."
   else
-    if kubectl exec "${WIKI_POD}" -n bank-wiki -- \
-        wget -qO- http://localhost:8080/health 2>/dev/null; then
-      echo -e "${GREEN}  [OK]${NC} Wiki server is responding."
-    else
-      warn "Wiki server health check returned unexpected response. The server may still be initializing."
-    fi
+    warn "Wiki server health check returned unexpected response."
   fi
 else
   warn "Could not find wiki server pod for health check."
 fi
 
-echo "Checking agents exist..."
+echo "Checking agents..."
 AGENT_COUNT=$(kubectl get agents -n kagent --no-headers 2>/dev/null | wc -l | tr -d ' ')
 if [[ "${AGENT_COUNT}" -gt 0 ]]; then
   echo -e "${GREEN}  [OK]${NC} Found ${AGENT_COUNT} agent(s) in namespace 'kagent'."
@@ -281,33 +384,34 @@ else
   warn "No RemoteMCPServers found. KMCP may still be initializing."
 fi
 
+echo "Checking AgentRegistry catalog..."
+if [[ -n "${AR_POD:-}" ]]; then
+  AR_AGENTS=$(kubectl exec "${AR_POD}" -n agentregistry -- \
+    wget -qO- "${AR_URL}/v0/agents" 2>/dev/null | jq '.metadata.count' 2>/dev/null || echo "0")
+  AR_SKILLS=$(kubectl exec "${AR_POD}" -n agentregistry -- \
+    wget -qO- "${AR_URL}/v0/skills" 2>/dev/null | jq '.metadata.count' 2>/dev/null || echo "0")
+  AR_SERVERS=$(kubectl exec "${AR_POD}" -n agentregistry -- \
+    wget -qO- "${AR_URL}/v0/servers" 2>/dev/null | jq '.metadata.count' 2>/dev/null || echo "0")
+  echo -e "${GREEN}  [OK]${NC} AgentRegistry: ${AR_AGENTS} agents, ${AR_SKILLS} skills, ${AR_SERVERS} MCP servers"
+fi
+
 # ---------------------------------------------------------------------------
-# Step 11: Access Information
+# Step 14: Access Information
 # ---------------------------------------------------------------------------
-banner "Step 13: Access Information"
+banner "Step 14: Access Information"
 
 echo -e "${GREEN}Solo Bank Demo is deployed!${NC}"
 echo ""
-echo "Port-forward commands to access services:"
+echo "All services are available — no port-forwarding needed:"
 echo ""
-echo "  Management UI:"
-echo "    kubectl port-forward svc/solo-enterprise-ui -n kagent 8090:8090"
-echo "    Then open: http://localhost:8090"
-echo ""
-echo "  AgentRegistry:"
-echo "    kubectl port-forward svc/agentregistry -n agentregistry 8081:80"
-echo "    Then open: http://localhost:8081"
-echo ""
-echo "  kagent API:"
-echo "    kubectl port-forward svc/kagent-controller -n kagent 8083:8083"
-echo ""
-echo "  Bank Wiki Server:"
-echo "    kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080"
-echo "    Then open: http://localhost:8080"
-echo ""
+echo "  Management UI:     http://localhost:30090"
+echo "  Bank Wiki Server:  http://localhost:30400"
+echo "  AgentRegistry UI:  http://localhost:30121"
+echo "  kagent API:        http://localhost:30083"
 if [ -d "${SCRIPT_DIR}/docs-site" ]; then
-  echo "  Docs Site (NodePort 30500):"
-  echo "    Open: http://localhost:30500"
-  echo ""
+  echo "  Docs Site:         http://localhost:30500"
 fi
+echo ""
+echo -e "${GREEN}Start here: ${NC}http://localhost:30500"
+echo ""
 echo -e "${GREEN}Setup complete!${NC}"

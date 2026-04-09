@@ -51,9 +51,9 @@
         <div class="card-icon">📖</div>
         <h3>Usage Guide</h3>
         <p>
-          Learn how to interact with the four banking agents — Triage, Customer Service,
-          Mortgage Advisor, and Compliance. Includes example prompts, identity verification
-          flows, and how to view OTEL traces.
+          Learn how to interact with the seven banking agents — Triage, Customer Service,
+          Mortgage Advisor, Compliance, Kubernetes, Helm, and IT Support. Includes example
+          prompts, identity verification flows, and how to view OTEL traces.
         </p>
         <a href="guide.html" class="card-link">Read the guide</a>
       </div>
@@ -88,19 +88,20 @@
   <!-- What's in the demo -->
   <section class="section" style="padding-top: 0;">
     <h2 class="section-title">What's in the Demo</h2>
-    <p class="section-subtitle">Four specialist agents, three MCP tool servers, and a full observability pipeline.</p>
+    <p class="section-subtitle">Seven specialist agents, three MCP tool servers, and a full observability pipeline.</p>
 
     <div class="cards">
-      <div class="card">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-triage-agent" data-model="Claude Sonnet" data-tools="None — pure routing" data-prompts="I want to check my account balance|What mortgage rate can I get?|I see a suspicious charge on my account|I need help with an IT issue">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Triage Agent</h3>
         <p>
           Front-door router. Greets customers, understands intent, and routes to the correct
           specialist. Powered by <strong>Claude Sonnet</strong>. No tools — pure routing logic.
         </p>
+        <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-customer-service-agent" data-model="GPT-4o Mini" data-tools="customer-tools, transaction-tools" data-prompts="I'm John Smith, can you check my balance?|Show me transactions over $500 this month|My Customer ID is CUST-00042|I see a charge I don't recognize">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Customer Service Agent</h3>
         <p>
@@ -108,9 +109,10 @@
           customer identity. Powered by <strong>GPT-4o Mini</strong> with customer and
           transaction tool access.
         </p>
+        <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-mortgage-advisor-agent" data-model="Claude Sonnet" data-tools="customer-tools, policy-tools" data-prompts="What rate would CUST-00042 get on a 30-year fixed?|Can CUST-00003 qualify for a 15-year mortgage?|What's the minimum down payment for a jumbo loan?|What does refinancing look like for a 680 credit score?">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Mortgage Advisor Agent</h3>
         <p>
@@ -118,9 +120,10 @@
           applying rate tables, and checking lending policies. Powered by
           <strong>Claude Sonnet</strong>.
         </p>
+        <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-compliance-agent" data-model="Claude Sonnet" data-tools="customer-tools, policy-tools, transaction-tools" data-prompts="Review CUST-00003 for compliance issues|Check AML red flags in the last 90 days|Is CUST-00042 getting the correct rate for their credit tier?|Audit customers with international wire transfers">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Compliance Agent</h3>
         <p>
@@ -128,6 +131,40 @@
           customer data, transactions, and bank policies. Generates structured compliance
           reports.
         </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-k8s-agent" data-model="Claude Sonnet" data-tools="None — knowledge-based" data-prompts="What services are in the bank-wiki namespace?|How do I troubleshoot a failing MCP connection?|What are the NodePort mappings?|Explain how KMCP connects agents to tools">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Kubernetes Agent</h3>
+        <p>
+          Infrastructure operations specialist. Monitors cluster health, troubleshoots pod
+          issues, and provides guidance on service connectivity. Internal/DevOps use only.
+          Powered by <strong>Claude Sonnet</strong>.
+        </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-helm-agent" data-model="Claude Sonnet" data-tools="None — knowledge-based" data-prompts="What Helm releases are installed?|How do I upgrade kagent-enterprise?|What's the correct install order?|How do I roll back management UI?">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Helm Agent</h3>
+        <p>
+          Helm deployment specialist. Manages release configurations, plans upgrades, and
+          troubleshoots chart issues for kagent-enterprise and related components.
+          Powered by <strong>Claude Sonnet</strong>.
+        </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-it-agent" data-model="Claude Sonnet" data-tools="customer-tools, transaction-tools, policy-tools" data-prompts="Customer can't see their balance — investigate|Rate quotes seem wrong for Good tier|New employee needs system access|Transaction searches are returning errors">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>IT Support Agent</h3>
+        <p>
+          IT support lead handling internal tickets, system troubleshooting, and cross-team
+          coordination. Has access to customer, transaction, and policy tools. Powered by
+          <strong>Claude Sonnet</strong>.
+        </p>
+        <span class="card-link">Chat with this agent</span>
       </div>
 
       <div class="card">
@@ -170,13 +207,13 @@
             <td><strong>kagent Enterprise</strong></td>
             <td>Kubernetes-native agent runtime (CRD-based), KMCP, Agent/ModelConfig/RemoteMCPServer CRDs</td>
             <td><code>kagent</code></td>
-            <td>Port-forward :8083</td>
+            <td><a href="http://localhost:30083">NodePort 30083</a></td>
           </tr>
           <tr>
             <td><strong>Management UI</strong></td>
             <td>kagent management dashboard (solo-enterprise-ui)</td>
             <td><code>kagent</code></td>
-            <td>Port-forward :8090</td>
+            <td><a href="http://localhost:30090">NodePort 30090</a></td>
           </tr>
           <tr>
             <td><strong>AgentRegistry</strong> (OSS)</td>
@@ -188,7 +225,7 @@
             <td><strong>Bank Wiki</strong></td>
             <td>Content and policy document server</td>
             <td><code>bank-wiki</code></td>
-            <td>Port-forward :8080</td>
+            <td><a href="http://localhost:30400">NodePort 30400</a></td>
           </tr>
           <tr>
             <td><strong>Docs Site</strong> (this site)</td>
@@ -226,6 +263,281 @@
     </div>
   </div>
 </footer>
+
+<!-- Agent Chat Panel (slides in from right) -->
+<div id="chat-panel" class="chat-panel" onclick="if(event.target===this)closeChatPanel()">
+  <div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+      <div class="chat-header-info">
+        <div class="chat-agent-icon" id="chat-agent-icon">T</div>
+        <div>
+          <h2 id="chat-title">Triage Agent</h2>
+          <div class="chat-header-meta">
+            <span id="chat-model" class="chat-tag">Claude Sonnet</span>
+            <span id="chat-tools" class="chat-tag chat-tag-tool">No tools</span>
+          </div>
+        </div>
+      </div>
+      <div class="chat-header-actions">
+        <a id="chat-open-ui" href="http://localhost:30090" target="_blank" class="chat-btn-open" title="Open in Management UI">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1v-3M9 2h5v5M14 2L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <button class="chat-close" onclick="closeChatPanel()">&times;</button>
+      </div>
+    </div>
+
+    <!-- Chat Body — starts with suggestions, transitions to Management UI -->
+    <div class="chat-body" id="chat-body">
+      <!-- Suggestion view (initial state) -->
+      <div id="chat-suggestions" class="chat-suggestions">
+        <div class="chat-welcome">
+          <div class="chat-welcome-icon" id="chat-welcome-icon">T</div>
+          <h3 id="chat-welcome-title">Triage Agent</h3>
+          <p id="chat-welcome-desc">Select a prompt to start a conversation in the Management UI</p>
+        </div>
+        <div id="chat-prompt-list" class="chat-prompt-list"></div>
+      </div>
+
+      <!-- Management UI iframe (shown after clicking a prompt or "Start Chat") -->
+      <div id="chat-iframe-wrap" class="chat-iframe-wrap" style="display:none;">
+        <div class="chat-iframe-loading" id="chat-iframe-loading">
+          <div class="chat-spinner"></div>
+          <p>Loading Management UI...</p>
+        </div>
+        <iframe id="chat-iframe" class="chat-iframe" src="about:blank" allow="clipboard-write"></iframe>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="chat-footer">
+      <button id="chat-start-btn" class="chat-start-btn" onclick="startChat()">
+        Open Management UI Chat
+      </button>
+      <button id="chat-back-btn" class="chat-back-btn" style="display:none;" onclick="showSuggestions()">
+        Back to Prompts
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .agent-card { cursor: pointer; }
+  .agent-card .card-link { pointer-events: none; }
+
+  /* Chat Panel — slides in from right */
+  .chat-panel {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+  }
+  .chat-panel.open { display: block; animation: chatOverlayIn 0.2s ease; }
+  @keyframes chatOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .chat-container {
+    position: fixed; top: 0; right: 0; width: 520px; max-width: 100vw; height: 100vh;
+    background: var(--surface); display: flex; flex-direction: column;
+    box-shadow: -8px 0 40px rgba(0,0,0,0.25);
+    animation: chatSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes chatSlideIn { from { transform: translateX(100%); } to { transform: none; } }
+
+  /* Header */
+  .chat-header {
+    padding: 16px 20px; display: flex; align-items: center;
+    justify-content: space-between; border-bottom: 1px solid var(--border);
+    background: var(--surface-alt); flex-shrink: 0;
+  }
+  .chat-header-info { display: flex; align-items: center; gap: 12px; }
+  .chat-agent-icon {
+    width: 42px; height: 42px; border-radius: 10px; background: var(--primary);
+    color: white; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+  }
+  .chat-header h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 4px; color: var(--text); }
+  .chat-header-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chat-tag { font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 100px; background: #dbeafe; color: #1d4ed8; }
+  .chat-tag-tool { background: #dcfce7; color: #166534; }
+  .chat-header-actions { display: flex; align-items: center; gap: 8px; }
+  .chat-btn-open {
+    display: flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 6px; background: transparent;
+    color: var(--text-muted); border: 1px solid var(--border); cursor: pointer;
+    text-decoration: none; transition: all 0.15s;
+  }
+  .chat-btn-open:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+  .chat-close {
+    background: none; border: none; font-size: 1.5rem; color: var(--text-muted);
+    cursor: pointer; line-height: 1; padding: 4px;
+  }
+  .chat-close:hover { color: var(--text); }
+
+  /* Body */
+  .chat-body { flex: 1; overflow: hidden; position: relative; }
+
+  /* Welcome / Suggestions */
+  .chat-suggestions {
+    padding: 24px 20px; height: 100%; overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+  .chat-welcome {
+    text-align: center; padding: 32px 0 24px;
+  }
+  .chat-welcome-icon {
+    width: 64px; height: 64px; border-radius: 16px; background: var(--primary);
+    color: white; display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.6rem; margin-bottom: 16px;
+  }
+  .chat-welcome h3 { font-size: 1.2rem; font-weight: 700; margin: 0 0 8px; color: var(--text); }
+  .chat-welcome p { color: var(--text-muted); font-size: 0.9rem; margin: 0; }
+
+  .chat-prompt-list { display: flex; flex-direction: column; gap: 8px; padding-top: 8px; }
+  .chat-prompt-item {
+    background: var(--surface-alt); border: 1px solid var(--border);
+    border-left: 3px solid var(--primary); border-radius: 8px;
+    padding: 12px 16px; font-size: 0.9rem; color: var(--text);
+    cursor: pointer; transition: all 0.15s; display: flex;
+    align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .chat-prompt-item:hover {
+    background: var(--primary-light); border-left-color: var(--primary-dark);
+    transform: translateX(2px);
+  }
+  .chat-prompt-item .prompt-text { flex: 1; }
+  .chat-prompt-item .prompt-action {
+    font-size: 0.72rem; font-weight: 600; color: var(--primary);
+    white-space: nowrap; opacity: 0; transition: opacity 0.15s;
+  }
+  .chat-prompt-item:hover .prompt-action { opacity: 1; }
+
+  /* Iframe */
+  .chat-iframe-wrap {
+    position: absolute; inset: 0; background: #0D0E15;
+  }
+  .chat-iframe {
+    width: 100%; height: 100%; border: none; background: #0D0E15;
+  }
+  .chat-iframe-loading {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+    background: #0D0E15; color: #94a3b8; z-index: 2;
+  }
+  .chat-iframe-loading.hidden { display: none; }
+  .chat-spinner {
+    width: 32px; height: 32px; border: 3px solid #1e293b;
+    border-top-color: var(--primary); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Footer */
+  .chat-footer {
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    background: var(--surface-alt); text-align: center; flex-shrink: 0;
+  }
+  .chat-start-btn {
+    width: 100%; padding: 12px; border-radius: 8px; border: none;
+    background: var(--primary); color: white; font-size: 0.95rem;
+    font-weight: 700; cursor: pointer; transition: background 0.15s;
+  }
+  .chat-start-btn:hover { background: var(--primary-dark); }
+  .chat-back-btn {
+    width: 100%; padding: 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--text-muted); font-size: 0.85rem; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .chat-back-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* Responsive */
+  @media (max-width: 560px) {
+    .chat-container { width: 100vw; }
+  }
+</style>
+
+<script>
+var currentAgent = null;
+
+function openAgent(card) {
+  currentAgent = {
+    name: card.dataset.agent,
+    title: card.querySelector('h3').textContent,
+    model: card.dataset.model,
+    tools: card.dataset.tools,
+    prompts: card.dataset.prompts.split('|')
+  };
+
+  document.getElementById('chat-title').textContent = currentAgent.title;
+  document.getElementById('chat-model').textContent = currentAgent.model;
+  document.getElementById('chat-tools').textContent = currentAgent.tools;
+  document.getElementById('chat-agent-icon').textContent = currentAgent.title.charAt(0);
+  document.getElementById('chat-welcome-icon').textContent = currentAgent.title.charAt(0);
+  document.getElementById('chat-welcome-title').textContent = currentAgent.title;
+  document.getElementById('chat-welcome-desc').textContent =
+    'Select a suggested prompt or open the Management UI to start chatting.';
+
+  var list = document.getElementById('chat-prompt-list');
+  while (list.firstChild) list.removeChild(list.firstChild);
+
+  currentAgent.prompts.forEach(function(p) {
+    var div = document.createElement('div');
+    div.className = 'chat-prompt-item';
+    div.innerHTML = '<span class="prompt-text">' + p + '</span><span class="prompt-action">Copy &amp; Open</span>';
+    div.addEventListener('click', function(e) {
+      e.stopPropagation();
+      navigator.clipboard.writeText(p).then(function() {
+        div.querySelector('.prompt-action').textContent = 'Copied!';
+        div.style.borderLeftColor = '#22c55e';
+        setTimeout(function() {
+          div.querySelector('.prompt-action').textContent = 'Copy & Open';
+          div.style.borderLeftColor = '';
+        }, 1500);
+      });
+      startChat();
+    });
+    list.appendChild(div);
+  });
+
+  // Reset to suggestions view
+  document.getElementById('chat-suggestions').style.display = '';
+  document.getElementById('chat-iframe-wrap').style.display = 'none';
+  document.getElementById('chat-start-btn').style.display = '';
+  document.getElementById('chat-back-btn').style.display = 'none';
+  document.getElementById('chat-iframe').src = 'about:blank';
+
+  document.getElementById('chat-panel').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function startChat() {
+  document.getElementById('chat-suggestions').style.display = 'none';
+  document.getElementById('chat-iframe-wrap').style.display = '';
+  document.getElementById('chat-start-btn').style.display = 'none';
+  document.getElementById('chat-back-btn').style.display = '';
+
+  var loading = document.getElementById('chat-iframe-loading');
+  loading.classList.remove('hidden');
+
+  var iframe = document.getElementById('chat-iframe');
+  iframe.onload = function() { loading.classList.add('hidden'); };
+  // Load Management UI through same-origin proxy (strips X-Frame-Options)
+  iframe.src = '/mgmt/';
+}
+
+function showSuggestions() {
+  document.getElementById('chat-suggestions').style.display = '';
+  document.getElementById('chat-iframe-wrap').style.display = 'none';
+  document.getElementById('chat-start-btn').style.display = '';
+  document.getElementById('chat-back-btn').style.display = 'none';
+}
+
+function closeChatPanel() {
+  document.getElementById('chat-panel').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('chat-iframe').src = 'about:blank';
+}
+
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeChatPanel(); });
+</script>
 
 </body>
 </html>

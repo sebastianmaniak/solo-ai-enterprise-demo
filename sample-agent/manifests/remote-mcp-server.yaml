@@ -4,6 +4,6 @@ metadata:
   name: account-summary-tools
   namespace: kagent
 spec:
-  url: http://account-summary-tools.bank-wiki.svc.cluster.local:8084/mcp
+  url: http://account-summary-tools.bank-wiki.svc.cluster.local:8085/mcp
   protocol: STREAMABLE_HTTP
-  description: "Account summary tool — generates brief customer summaries"
+  description: "Account summary tool — generates brief customer summaries from wiki data"
