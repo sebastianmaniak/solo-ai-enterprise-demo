@@ -29,7 +29,7 @@
     <h1>Build Your Own Agent</h1>
     <p>
       A step-by-step tutorial: create a custom MCP tool server in Go, register it in AgentRegistry,
-      wire it to a kagent Agent CRD, and test it — all in about 30 minutes.
+      wire it to a kagent Agent CRD via KMCP, and test it — all in about 30 minutes.
     </p>
   </div>
 </div>
@@ -50,7 +50,7 @@
       <li>Registering the skill in AgentRegistry via REST API</li>
       <li>Creating a <code>RemoteMCPServer</code> Kubernetes resource</li>
       <li>Defining an <code>Agent</code> CRD and wiring it to your tool server</li>
-      <li>Testing the agent live in the kagent UI</li>
+      <li>Testing the agent live in the Management UI</li>
     </ul>
 
     <div class="callout callout-info">
@@ -428,16 +428,16 @@ kubectl describe agent -n kagent bank-account-summary-agent</code></pre>
         <div class="step-number">6</div>
         <h3>Test Your Agent</h3>
         <p>
-          Open the kagent UI, select your new agent, and try it out:
+          Open the Management UI, select your new agent, and try it out:
         </p>
-        <pre><code># Make sure the kagent UI port-forward is running
-kubectl port-forward svc/kagent-enterprise -n kagent 3000:80
+        <pre><code># Make sure the Management UI port-forward is running
+kubectl port-forward svc/solo-enterprise-ui -n kagent 8090:8090
 
 # Open in browser
-open http://localhost:3000</code></pre>
+open http://localhost:8090</code></pre>
 
         <p>
-          In the kagent UI, select <strong>bank-account-summary-agent</strong> from the agent
+          In the Management UI, select <strong>bank-account-summary-agent</strong> from the agent
           dropdown and try these prompts:
         </p>
 
@@ -491,11 +491,10 @@ kubectl exec "$TOOL_POD" -n bank-wiki -- wget -qO- \
         </p>
       </div>
       <div class="card">
-        <h3>Observe with AgentGateway</h3>
+        <h3>Register in AgentRegistry</h3>
         <p>
-          Route your agent's tool calls through AgentGateway to get OTEL tracing, rate limiting,
-          and policy enforcement on every tool invocation. Update the RemoteMCPServer URL to
-          point to the gateway.
+          Register your agent's skills and tools in AgentRegistry so they can be discovered
+          by other agents and tooling across the cluster. Use the REST API at NodePort 30121.
         </p>
       </div>
     </div>
@@ -510,15 +509,15 @@ kubectl exec "$TOOL_POD" -n bank-wiki -- wget -qO- \
     <div class="footer-versions">
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        kagent v0.3+
+        kagent Enterprise v0.3.14
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        AgentGateway Enterprise v2.2.x
+        Management UI v0.3.14
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        AgentRegistry OSS v0.1+
+        AgentRegistry OSS v0.3.3
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>

@@ -48,42 +48,36 @@
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        Kind Cluster: solo-bank-demo                         │
 │                                                                             │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │  namespace: agentgateway-system                                       │  │
-│  │                                                                       │  │
-│  │   ┌─────────────────────────┐   ┌──────────────────────────────┐    │  │
-│  │   │  enterprise-agentgateway│   │  management (UI + OTEL)       │    │  │
-│  │   │  NodePort: 30080        │   │  Port-forward: 4000→8090      │    │  │
-│  │   │  Gateway API proxy      │   │  Trace viewer + metrics        │    │  │
-│  │   └─────────────┬───────────┘   └──────────────────────────────┘    │  │
-│  │                 │  routes MCP traffic                                 │  │
-│  └─────────────────┼────────────────────────────────────────────────────┘  │
-│                    │                                                         │
-│  ┌─────────────────┼────────────────────────────────────────────────────┐  │
-│  │  namespace: kagent                │                                    │  │
-│  │                                   ▼                                    │  │
-│  │   ┌──────────────────────────────────────────────────────────────┐   │  │
-│  │   │  kagent-enterprise (agent runtime)                            │   │  │
-│  │   │  Port-forward: 3000→80   (kagent UI)                         │   │  │
-│  │   │                                                               │   │  │
-│  │   │  ┌──────────────────┐  ┌──────────────────────────────────┐  │   │  │
-│  │   │  │ bank-triage-agent│  │  bank-customer-service-agent     │  │   │  │
-│  │   │  │ Claude Sonnet    │  │  GPT-4o Mini                     │  │   │  │
-│  │   │  │ no tools         │  │  → customer-tools, txn-tools     │  │   │  │
-│  │   │  └──────────────────┘  └──────────────────────────────────┘  │   │  │
-│  │   │                                                               │   │  │
-│  │   │  ┌───────────────────────────┐  ┌─────────────────────────┐  │   │  │
-│  │   │  │ bank-mortgage-advisor     │  │ bank-compliance-agent   │  │   │  │
-│  │   │  │ Claude Sonnet             │  │ Claude Sonnet           │  │   │  │
-│  │   │  │ → customer, policy tools  │  │ → all 3 MCP servers     │  │   │  │
-│  │   │  └───────────────────────────┘  └─────────────────────────┘  │   │  │
-│  │   └──────────────────────────────────────────────────────────────┘   │  │
-│  │                                                                        │  │
-│  │   RemoteMCPServer CRDs:                                                │  │
-│  │     bank-customer-tools  → bank-wiki:8081/mcp                         │  │
-│  │     bank-policy-tools    → bank-wiki:8082/mcp                         │  │
-│  │     bank-transaction-tools → bank-wiki:8083/mcp                       │  │
-│  └────────────────────────────────────────────────────────────────────────┘  │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │  namespace: kagent                                                      │ │
+│  │                                                                         │ │
+│  │   ┌──────────────────────────────────────────────────────────────┐    │ │
+│  │   │  kagent-enterprise (controller + KMCP)                        │    │ │
+│  │   │  Port-forward: 8083 (API)                                     │    │ │
+│  │   │                                                               │    │ │
+│  │   │  ┌──────────────────┐  ┌──────────────────────────────────┐  │    │ │
+│  │   │  │ bank-triage-agent│  │  bank-customer-service-agent     │  │    │ │
+│  │   │  │ Claude Sonnet    │  │  GPT-4o Mini                     │  │    │ │
+│  │   │  │ no tools         │  │  → customer-tools, txn-tools     │  │    │ │
+│  │   │  └──────────────────┘  └──────────────────────────────────┘  │    │ │
+│  │   │                                                               │    │ │
+│  │   │  ┌───────────────────────────┐  ┌─────────────────────────┐  │    │ │
+│  │   │  │ bank-mortgage-advisor     │  │ bank-compliance-agent   │  │    │ │
+│  │   │  │ Claude Sonnet             │  │ Claude Sonnet           │  │    │ │
+│  │   │  │ → customer, policy tools  │  │ → all 3 MCP servers     │  │    │ │
+│  │   │  └───────────────────────────┘  └─────────────────────────┘  │    │ │
+│  │   └──────────────────────────────────────────────────────────────┘    │ │
+│  │                                                                         │ │
+│  │   ┌──────────────────────────────────────────────────────────────┐    │ │
+│  │   │  solo-enterprise-ui (Management UI)                           │    │ │
+│  │   │  Port-forward: 8090                                           │    │ │
+│  │   └──────────────────────────────────────────────────────────────┘    │ │
+│  │                                                                         │ │
+│  │   CRDs: Agent, ModelConfig, RemoteMCPServer                            │ │
+│  │     bank-customer-tools  → bank-wiki:8081/mcp  (via KMCP)             │ │
+│  │     bank-policy-tools    → bank-wiki:8082/mcp  (via KMCP)             │ │
+│  │     bank-transaction-tools → bank-wiki:8083/mcp (via KMCP)            │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
 │                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
 │  │  namespace: bank-wiki                                                  │  │
@@ -111,10 +105,9 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 
 External Access:
-  NodePort 30080 → AgentGateway (MCP endpoint)
   NodePort 30121 → AgentRegistry (skill catalog API)
   NodePort 30500 → Docs Site (this site)
-  Port-forward  → kagent UI (3000), Management UI (4000)</pre>
+  Port-forward  → Management UI (8090), kagent API (8083)</pre>
     </div>
 
     <!-- Namespaces -->
@@ -131,22 +124,16 @@ External Access:
         </thead>
         <tbody>
           <tr>
-            <td><code>agentgateway-system</code></td>
-            <td>MCP traffic proxy, observability, policy enforcement</td>
-            <td>enterprise-agentgateway, management, telemetry-collector</td>
-            <td>Helm chart (agentgateway)</td>
+            <td><code>kagent</code></td>
+            <td>Agent runtime, CRD controllers, Management UI, KMCP</td>
+            <td>kagent-enterprise controller, solo-enterprise-ui, Agent CRDs, ModelConfig CRDs, RemoteMCPServer CRDs</td>
+            <td>Helm chart (kagent)</td>
           </tr>
           <tr>
             <td><code>agentregistry</code></td>
             <td>Skill and tool catalog with REST API</td>
             <td>agentregistry</td>
             <td>Helm chart (agentregistry)</td>
-          </tr>
-          <tr>
-            <td><code>kagent</code></td>
-            <td>Agent runtime, CRD controllers, agent pods</td>
-            <td>kagent-enterprise, Agent CRDs, RemoteMCPServer CRDs</td>
-            <td>Helm chart (kagent)</td>
           </tr>
           <tr>
             <td><code>bank-wiki</code></td>
@@ -161,7 +148,7 @@ External Access:
     <!-- Data Flow -->
     <h2>Request Data Flow</h2>
     <p>
-      The numbered steps below trace a complete request from a user typing in the kagent UI
+      The numbered steps below trace a complete request from a user typing in the Management UI
       to a tool response returning through the stack.
     </p>
 
@@ -170,7 +157,7 @@ External Access:
         <div class="step-number">1</div>
         <h3>User Sends a Prompt</h3>
         <p>
-          The user opens the kagent UI (<code>http://localhost:3000</code>), selects an agent
+          The user opens the Management UI (<code>http://localhost:8090</code>), selects an agent
           (e.g., <code>bank-customer-service-agent</code>), and types a message such as
           "I'm John Smith, what's my balance?"
         </p>
@@ -181,19 +168,22 @@ External Access:
         <h3>kagent Invokes the LLM</h3>
         <p>
           The kagent runtime reads the Agent CRD for <code>bank-customer-service-agent</code>,
-          assembles the system prompt and conversation history, and calls the configured LLM
-          (<code>openai-gpt4o-mini</code> model config). The LLM responds with a tool call:
+          assembles the system prompt and conversation history, and makes a direct API call
+          to the configured LLM via its <code>ModelConfig</code> CRD (e.g.,
+          <code>openai-gpt4o-mini</code> pointing to the OpenAI API with an API key secret).
+          The LLM responds with a tool call:
           <code>get_customer_by_name({"name": "John Smith"})</code>.
         </p>
       </div>
 
       <div class="step">
         <div class="step-number">3</div>
-        <h3>Tool Request Dispatched Through AgentGateway</h3>
+        <h3>KMCP Routes the MCP Tool Call</h3>
         <p>
           kagent looks up the <code>RemoteMCPServer</code> named <code>bank-customer-tools</code>
-          and sends an MCP <code>tools/call</code> request to its URL. This traffic passes through
-          the AgentGateway proxy, which applies policy checks and emits an OTEL trace span.
+          and KMCP sends the MCP <code>tools/call</code> request directly to the tool server
+          in the <code>bank-wiki</code> namespace. KMCP handles the MCP protocol routing
+          between the kagent controller and the remote MCP tool servers.
         </p>
       </div>
 
@@ -209,21 +199,12 @@ External Access:
 
       <div class="step">
         <div class="step-number">5</div>
-        <h3>Response Flows Back Through AgentGateway</h3>
-        <p>
-          The tool result travels back through AgentGateway (another trace span is recorded) and
-          is returned to kagent. The OTEL spans for this round-trip are exported to the
-          telemetry-collector and visible in the Management UI.
-        </p>
-      </div>
-
-      <div class="step">
-        <div class="step-number">6</div>
         <h3>LLM Generates Final Response</h3>
         <p>
-          kagent feeds the tool result back to the LLM, which now composes a final human-readable
-          response: "Thank you, John. Your checking account balance is $4,280.50 and your savings
-          balance is $12,450.00." This response is streamed back to the kagent UI.
+          The tool result is returned via KMCP to kagent, which feeds it back to the LLM.
+          The LLM composes a final human-readable response: "Thank you, John. Your checking
+          account balance is $4,280.50 and your savings balance is $12,450.00." This response
+          is streamed back to the Management UI.
         </p>
       </div>
     </div>
@@ -242,34 +223,28 @@ External Access:
         </thead>
         <tbody>
           <tr>
-            <td><strong>kagent</strong></td>
-            <td>v0.3+</td>
+            <td><strong>kagent Enterprise</strong></td>
+            <td>v0.3.14</td>
             <td>Helm chart: <code>oci://ghcr.io/kagent-dev/kagent/helm/kagent</code></td>
-            <td>Enterprise edition via license key</td>
+            <td>Enterprise edition with KMCP</td>
           </tr>
           <tr>
-            <td><strong>AgentGateway</strong></td>
-            <td>Enterprise v2.2.x</td>
-            <td>Helm chart: <code>oci://ghcr.io/solo-io/enterprise-agentgateway/helm</code></td>
-            <td>Requires <code>AGENTGATEWAY_LICENSE_KEY</code></td>
+            <td><strong>Management UI</strong></td>
+            <td>v0.3.14</td>
+            <td><code>solo-enterprise-ui</code></td>
+            <td>Installed in kagent namespace</td>
           </tr>
           <tr>
             <td><strong>AgentRegistry</strong></td>
-            <td>OSS v0.1+</td>
+            <td>OSS v0.3.3</td>
             <td>Helm chart: <code>oci://ghcr.io/solo-io/agentregistry/helm/agentregistry</code></td>
             <td>Open-source; no license required</td>
-          </tr>
-          <tr>
-            <td><strong>Gateway API CRDs</strong></td>
-            <td>v1.5.0</td>
-            <td><code>standard-install.yaml</code> from kubernetes-sigs</td>
-            <td>Required by AgentGateway</td>
           </tr>
           <tr>
             <td><strong>Kind</strong></td>
             <td>v0.20+</td>
             <td>Local cluster</td>
-            <td>Single-node; ports 30080, 30121, 30500 mapped</td>
+            <td>Single-node; ports 30121, 30500 mapped</td>
           </tr>
           <tr>
             <td><strong>Claude Sonnet</strong></td>
@@ -473,40 +448,36 @@ External Access:
       </table>
     </div>
 
-    <!-- Gateway Config -->
-    <h2>AgentGateway Configuration</h2>
+    <!-- kagent CRD Configuration -->
+    <h2>kagent CRD Configuration</h2>
     <p>
-      The AgentGateway is configured using Gateway API resources. The core objects are:
+      kagent Enterprise uses Kubernetes Custom Resource Definitions (CRDs) to define agents,
+      model connections, and MCP tool server references. The core CRD types are:
     </p>
     <div class="table-wrapper">
       <table>
         <thead>
           <tr>
-            <th>Resource Kind</th>
-            <th>Name</th>
+            <th>CRD Kind</th>
             <th>Purpose</th>
+            <th>Example</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td><code>GatewayClass</code></td>
-            <td>enterprise-agentgateway</td>
-            <td>Declares the AgentGateway controller</td>
+            <td><code>Agent</code></td>
+            <td>Defines an agent with system prompt, model reference, and tool bindings</td>
+            <td><code>bank-triage-agent</code>, <code>bank-customer-service-agent</code></td>
           </tr>
           <tr>
-            <td><code>Gateway</code></td>
-            <td>agentgateway-proxy</td>
-            <td>Listener on port 80 in namespace agentgateway-system</td>
+            <td><code>ModelConfig</code></td>
+            <td>Points to an LLM API (OpenAI, Anthropic) with API key secret reference</td>
+            <td><code>openai-gpt4o-mini</code>, <code>anthropic-claude-sonnet</code></td>
           </tr>
           <tr>
-            <td><code>EnterpriseAgentgatewayParameters</code></td>
-            <td>tracing</td>
-            <td>Attaches OTEL tracing to the gateway via parametersRef</td>
-          </tr>
-          <tr>
-            <td><code>EnterpriseAgentgatewayPolicy</code></td>
-            <td>tracing</td>
-            <td>Routes OTEL spans to the telemetry-collector on port 4317</td>
+            <td><code>RemoteMCPServer</code></td>
+            <td>Declares the URL and protocol for an MCP tool server accessible via KMCP</td>
+            <td><code>bank-customer-tools</code>, <code>bank-policy-tools</code></td>
           </tr>
         </tbody>
       </table>
@@ -522,15 +493,15 @@ External Access:
     <div class="footer-versions">
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        kagent v0.3+
+        kagent Enterprise v0.3.14
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        AgentGateway Enterprise v2.2.x
+        Management UI v0.3.14
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        AgentRegistry OSS v0.1+
+        AgentRegistry OSS v0.3.3
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>

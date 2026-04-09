@@ -18,7 +18,7 @@ var wikiBaseURL string
 var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 type GetAccountSummaryArgs struct {
-	CustomerName string `json:"customer_name" jsonschema:"description=Full name of the customer (e.g. John Smith),required"`
+	CustomerName string `json:"customer_name" jsonschema:"Full name of the customer (e.g. John Smith),required"`
 }
 
 func main() {

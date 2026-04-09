@@ -60,7 +60,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# Step 2: Install Gateway API CRDs
+# Step 2: Install Gateway API CRDs (required by KMCP)
 # ---------------------------------------------------------------------------
 banner "Step 2: Install Gateway API CRDs"
 
@@ -76,7 +76,7 @@ kubectl apply -f "${SCRIPT_DIR}/manifests/namespaces.yaml"
 echo -e "${GREEN}Namespaces applied.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 4: Install AgentRegistry OSS
+# Step 3: Install AgentRegistry OSS
 # ---------------------------------------------------------------------------
 banner "Step 4: Install AgentRegistry OSS"
 
@@ -99,70 +99,58 @@ helm upgrade --install agentregistry \
 echo -e "${GREEN}AgentRegistry OSS installed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 5: Install AgentGateway Enterprise
+# Step 4: Install kagent Enterprise CRDs
 # ---------------------------------------------------------------------------
-banner "Step 5: Install AgentGateway Enterprise"
+banner "Step 5: Install kagent Enterprise CRDs"
 
-helm upgrade --install enterprise-agentgateway-crds \
-  oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway-crds \
-  --create-namespace --namespace agentgateway-system \
-  --version v2.3.0-beta.8 --wait --timeout 120s
+helm upgrade --install kagent-enterprise-crds \
+  oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise-crds \
+  --namespace kagent --create-namespace --version 0.3.14 --wait --timeout 120s
 
-helm upgrade --install enterprise-agentgateway \
-  oci://us-docker.pkg.dev/solo-public/enterprise-agentgateway/charts/enterprise-agentgateway \
-  --namespace agentgateway-system --version v2.3.0-beta.8 \
-  --set-string licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
-  --wait --timeout 300s
-
-echo -e "${GREEN}AgentGateway Enterprise installed.${NC}"
+echo -e "${GREEN}kagent CRDs installed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 6: Apply Gateway and tracing
+# Step 5: Install Management UI (provides OIDC for kagent)
 # ---------------------------------------------------------------------------
-banner "Step 6: Apply Gateway and tracing"
-
-kubectl apply -f "${SCRIPT_DIR}/manifests/gateway.yaml"
-echo "Waiting for proxy deployment to be ready..."
-kubectl wait --for=condition=available deployment \
-  -l app.kubernetes.io/component=proxy \
-  -n agentgateway-system \
-  --timeout=120s 2>/dev/null || \
-kubectl wait --for=condition=available deployment \
-  --all \
-  -n agentgateway-system \
-  --timeout=120s
-
-echo -e "${GREEN}Gateway applied and proxy ready.${NC}"
-
-# ---------------------------------------------------------------------------
-# Step 7: Install Management UI
-# ---------------------------------------------------------------------------
-banner "Step 7: Install Management UI"
+banner "Step 6: Install Management UI"
 
 helm upgrade --install management \
   oci://us-docker.pkg.dev/solo-public/solo-enterprise-helm/charts/management \
-  --namespace agentgateway-system --create-namespace \
+  --namespace kagent \
   --version 0.3.14 \
   --set cluster="solo-bank-demo" \
-  --set products.agentgateway.enabled=true \
+  --set products.kagent.enabled=true \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
-  --wait --timeout 300s
+  --no-hooks --timeout 300s
+
+echo "Waiting for Management UI pods to be ready..."
+kubectl wait --for=condition=available deployment/solo-enterprise-ui \
+  -n kagent --timeout=180s 2>/dev/null || \
+  warn "Management UI deployment not ready yet — kagent may need a restart."
 
 echo -e "${GREEN}Management UI installed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 8: Configure LLM backends
+# Step 6: Install kagent Enterprise
 # ---------------------------------------------------------------------------
-banner "Step 8: Configure LLM backends"
+banner "Step 7: Install kagent Enterprise"
 
-sed "s|__OPENAI_API_KEY__|${OPENAI_API_KEY}|g" \
-  "${SCRIPT_DIR}/manifests/llm-backends/openai.yaml" | kubectl apply -f -
+helm upgrade --install kagent-enterprise \
+  oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise \
+  --namespace kagent --version 0.3.14 \
+  --set defaultModelConfig.provider=OpenAI \
+  --set defaultModelConfig.model=gpt-4o-mini \
+  --set controller.enabled=true \
+  --set kmcp.enabled=true \
+  --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
+  --wait --timeout 300s
 
-sed "s|__ANTHROPIC_API_KEY__|${ANTHROPIC_API_KEY}|g" \
-  "${SCRIPT_DIR}/manifests/llm-backends/anthropic.yaml" | kubectl apply -f -
+echo -e "${GREEN}kagent Enterprise installed.${NC}"
 
-# Ensure kagent namespace exists before creating secrets
-kubectl create namespace kagent --dry-run=client -o yaml | kubectl apply -f -
+# ---------------------------------------------------------------------------
+# Step 7: Create LLM API key secrets
+# ---------------------------------------------------------------------------
+banner "Step 8: Create LLM API key secrets"
 
 kubectl create secret generic openai-secret \
   --namespace kagent \
@@ -174,32 +162,12 @@ kubectl create secret generic anthropic-secret \
   --from-literal=Authorization="${ANTHROPIC_API_KEY}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-echo -e "${GREEN}LLM backends configured.${NC}"
+echo -e "${GREEN}LLM API key secrets created.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 9: Install kagent Enterprise
+# Step 7: Build and load Docker images
 # ---------------------------------------------------------------------------
-banner "Step 9: Install kagent Enterprise"
-
-helm upgrade --install kagent-enterprise-crds \
-  oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise-crds \
-  --namespace kagent --version 0.3.14 --wait --timeout 120s
-
-helm upgrade --install kagent-enterprise \
-  oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise \
-  --namespace kagent --version 0.3.14 \
-  --set defaultModelConfig.provider=OpenAI \
-  --set defaultModelConfig.model=gpt-4o-mini \
-  --set controller.enabled=true \
-  --set kmcp.enabled=true \
-  --wait --timeout 300s
-
-echo -e "${GREEN}kagent Enterprise installed.${NC}"
-
-# ---------------------------------------------------------------------------
-# Step 10: Build and load Docker images
-# ---------------------------------------------------------------------------
-banner "Step 10: Build and load Docker images"
+banner "Step 9: Build and load Docker images"
 
 echo "Building bank-wiki-server..."
 docker build -t bank-wiki-server:latest "${SCRIPT_DIR}/wiki-server/"
@@ -222,8 +190,6 @@ docker build -t bank-transaction-tools:latest \
 if [ -d "${SCRIPT_DIR}/docs-site" ]; then
   echo "Building bank-docs-site..."
   docker build -t bank-docs-site:latest "${SCRIPT_DIR}/docs-site/"
-else
-  warn "docs-site directory not found. Skipping bank-docs-site image build."
 fi
 
 echo "Loading images into Kind cluster..."
@@ -239,9 +205,9 @@ fi
 echo -e "${GREEN}Docker images built and loaded.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 11: Deploy bank wiki and tool servers
+# Step 8: Deploy bank wiki and tool servers
 # ---------------------------------------------------------------------------
-banner "Step 11: Deploy bank wiki and tool servers"
+banner "Step 10: Deploy bank wiki and tool servers"
 
 kubectl apply -f "${SCRIPT_DIR}/manifests/bank-wiki/"
 
@@ -264,25 +230,19 @@ kubectl wait --for=condition=ready pod -l app=bank-transaction-tools \
 echo -e "${GREEN}Bank wiki and tool servers deployed.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 12: Apply MCP routing and agents
+# Step 9: Apply MCP servers, model configs, and agents
 # ---------------------------------------------------------------------------
-banner "Step 12: Apply MCP routing and agents"
+banner "Step 11: Apply MCP servers, model configs, and agents"
 
 kubectl apply -f "${SCRIPT_DIR}/manifests/mcp/"
 kubectl apply -f "${SCRIPT_DIR}/manifests/agents/"
 
-if [ -d "${SCRIPT_DIR}/manifests/docs-site" ]; then
-  kubectl apply -f "${SCRIPT_DIR}/manifests/docs-site/"
-else
-  warn "manifests/docs-site directory not found. Skipping docs-site manifest deployment."
-fi
-
-echo -e "${GREEN}MCP routing and agents applied.${NC}"
+echo -e "${GREEN}MCP servers, model configs, and agents applied.${NC}"
 
 # ---------------------------------------------------------------------------
-# Step 13: Smoke tests
+# Step 10: Smoke tests
 # ---------------------------------------------------------------------------
-banner "Step 13: Smoke tests"
+banner "Step 12: Smoke tests"
 
 echo "Checking wiki server health..."
 WIKI_POD=$(kubectl get pod -l app=bank-wiki-server -n bank-wiki \
@@ -293,7 +253,6 @@ if [[ -n "${WIKI_POD}" ]]; then
       wget -qO- http://localhost:8080/health 2>/dev/null | grep -qi "ok\|healthy\|200\|up"; then
     echo -e "${GREEN}  [OK]${NC} Wiki server health check passed."
   else
-    # Try a basic connectivity check even if the health response format differs
     if kubectl exec "${WIKI_POD}" -n bank-wiki -- \
         wget -qO- http://localhost:8080/health 2>/dev/null; then
       echo -e "${GREEN}  [OK]${NC} Wiki server is responding."
@@ -314,38 +273,41 @@ else
   warn "No agents found in namespace 'kagent'. They may still be initializing."
 fi
 
+echo "Checking RemoteMCPServers..."
+MCP_COUNT=$(kubectl get remotemcpservers -n kagent --no-headers 2>/dev/null | wc -l | tr -d ' ')
+if [[ "${MCP_COUNT}" -gt 0 ]]; then
+  echo -e "${GREEN}  [OK]${NC} Found ${MCP_COUNT} RemoteMCPServer(s) in namespace 'kagent'."
+else
+  warn "No RemoteMCPServers found. KMCP may still be initializing."
+fi
+
 # ---------------------------------------------------------------------------
-# Step 14: Print access info
+# Step 11: Access Information
 # ---------------------------------------------------------------------------
-banner "Step 14: Access Information"
+banner "Step 13: Access Information"
 
 echo -e "${GREEN}Solo Bank Demo is deployed!${NC}"
 echo ""
 echo "Port-forward commands to access services:"
 echo ""
-echo "  AgentGateway Proxy (MCP endpoint):"
-echo "    kubectl port-forward svc/enterprise-agentgateway -n agentgateway-system 8080:8080"
-echo ""
 echo "  Management UI:"
-echo "    kubectl port-forward svc/management -n agentgateway-system 8090:8090"
+echo "    kubectl port-forward svc/solo-enterprise-ui -n kagent 8090:8090"
 echo "    Then open: http://localhost:8090"
 echo ""
 echo "  AgentRegistry:"
 echo "    kubectl port-forward svc/agentregistry -n agentregistry 8081:80"
 echo "    Then open: http://localhost:8081"
 echo ""
-echo "  kagent UI:"
-echo "    kubectl port-forward svc/kagent-enterprise -n kagent 8082:80"
-echo "    Then open: http://localhost:8082"
+echo "  kagent API:"
+echo "    kubectl port-forward svc/kagent-controller -n kagent 8083:8083"
 echo ""
 echo "  Bank Wiki Server:"
-echo "    kubectl port-forward svc/bank-wiki-server -n bank-wiki 8083:8080"
-echo "    Then open: http://localhost:8083"
+echo "    kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080"
+echo "    Then open: http://localhost:8080"
 echo ""
 if [ -d "${SCRIPT_DIR}/docs-site" ]; then
-  echo "  Docs Site:"
-  echo "    kubectl port-forward svc/bank-docs-site -n bank-wiki 8084:8080"
-  echo "    Then open: http://localhost:8084"
+  echo "  Docs Site (NodePort 30500):"
+  echo "    Open: http://localhost:30500"
   echo ""
 fi
 echo -e "${GREEN}Setup complete!${NC}"

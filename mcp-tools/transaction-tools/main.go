@@ -17,27 +17,27 @@ var wikiClient *shared.WikiClient
 
 // GetTransactionHistoryArgs is the input schema for the get_transaction_history tool.
 type GetTransactionHistoryArgs struct {
-	AccountID string `json:"account_id" jsonschema:"description=Account ID to look up transaction history for (required)"`
-	DateFrom  string `json:"date_from,omitempty" jsonschema:"description=Start date for filtering transactions (optional, e.g. 2024-01-01)"`
-	DateTo    string `json:"date_to,omitempty" jsonschema:"description=End date for filtering transactions (optional, e.g. 2024-12-31)"`
+	AccountID string `json:"account_id" jsonschema:"Account ID to look up transaction history for (required)"`
+	DateFrom  string `json:"date_from,omitempty" jsonschema:"Start date for filtering transactions (optional, e.g. 2024-01-01)"`
+	DateTo    string `json:"date_to,omitempty" jsonschema:"End date for filtering transactions (optional, e.g. 2024-12-31)"`
 }
 
 // SearchTransactionsArgs is the input schema for the search_transactions tool.
 type SearchTransactionsArgs struct {
-	CustomerID string  `json:"customer_id" jsonschema:"description=Customer ID to search transactions for (required, e.g. CUST-00001)"`
-	MinAmount  float64 `json:"min_amount,omitempty" jsonschema:"description=Minimum transaction amount filter (optional)"`
-	MaxAmount  float64 `json:"max_amount,omitempty" jsonschema:"description=Maximum transaction amount filter (optional)"`
-	Merchant   string  `json:"merchant,omitempty" jsonschema:"description=Merchant name filter (optional)"`
+	CustomerID string  `json:"customer_id" jsonschema:"Customer ID to search transactions for (required, e.g. CUST-00001)"`
+	MinAmount  float64 `json:"min_amount,omitempty" jsonschema:"Minimum transaction amount filter (optional)"`
+	MaxAmount  float64 `json:"max_amount,omitempty" jsonschema:"Maximum transaction amount filter (optional)"`
+	Merchant   string  `json:"merchant,omitempty" jsonschema:"Merchant name filter (optional)"`
 }
 
 // GetAccountDetailsArgs is the input schema for the get_account_details tool.
 type GetAccountDetailsArgs struct {
-	AccountID string `json:"account_id" jsonschema:"description=Account ID to retrieve details for (required)"`
+	AccountID string `json:"account_id" jsonschema:"Account ID to retrieve details for (required)"`
 }
 
 // GetCustomerAccountsArgs is the input schema for the get_customer_accounts tool.
 type GetCustomerAccountsArgs struct {
-	CustomerID string `json:"customer_id" jsonschema:"description=Customer ID to retrieve accounts for (required, e.g. CUST-00001)"`
+	CustomerID string `json:"customer_id" jsonschema:"Customer ID to retrieve accounts for (required, e.g. CUST-00001)"`
 }
 
 func handleGetTransactionHistory(ctx context.Context, ss *mcp.ServerSession, params *mcp.CallToolParamsFor[GetTransactionHistoryArgs]) (*mcp.CallToolResultFor[any], error) {

@@ -46,11 +46,26 @@ spec:
       mcpServer:
         name: bank-customer-tools
         kind: RemoteMCPServer
+        toolNames:
+        - lookup_customer
+        - search_customers
+        - get_account_balance
+        - get_transaction_history
     - type: McpServer
       mcpServer:
         name: bank-policy-tools
         kind: RemoteMCPServer
+        toolNames:
+        - get_policy
+        - search_policies
+        - get_current_rates
+        - get_rate_for_profile
     - type: McpServer
       mcpServer:
         name: bank-transaction-tools
         kind: RemoteMCPServer
+        toolNames:
+        - get_transaction_history
+        - search_transactions
+        - get_account_details
+        - get_customer_accounts

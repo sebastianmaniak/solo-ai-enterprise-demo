@@ -17,23 +17,23 @@ var wikiClient *shared.WikiClient
 
 // GetPolicyArgs is the input schema for the get_policy tool.
 type GetPolicyArgs struct {
-	PolicyName string `json:"policy_name" jsonschema:"description=Name of the policy to retrieve (e.g. 'mortgage lending', 'credit score tiers', 'overdraft')"`
+	PolicyName string `json:"policy_name" jsonschema:"Name of the policy to retrieve (e.g. 'mortgage lending', 'credit score tiers', 'overdraft')"`
 }
 
 // SearchPoliciesArgs is the input schema for the search_policies tool.
 type SearchPoliciesArgs struct {
-	Query string `json:"query" jsonschema:"description=Search query to find relevant policies or procedures"`
+	Query string `json:"query" jsonschema:"Search query to find relevant policies or procedures"`
 }
 
 // GetCurrentRatesArgs is the input schema for the get_current_rates tool.
 type GetCurrentRatesArgs struct {
-	RateType string `json:"rate_type" jsonschema:"description=Type of rates to retrieve: 'mortgage', 'savings', 'cd', or 'credit-card'"`
+	RateType string `json:"rate_type" jsonschema:"Type of rates to retrieve: 'mortgage', 'savings', 'cd', or 'credit-card'"`
 }
 
 // GetRateForProfileArgs is the input schema for the get_rate_for_profile tool.
 type GetRateForProfileArgs struct {
-	CreditScore int    `json:"credit_score" jsonschema:"description=Customer credit score (e.g. 720)"`
-	LoanType    string `json:"loan_type" jsonschema:"description=Type of loan (e.g. 'mortgage', 'cd', 'credit-card')"`
+	CreditScore int    `json:"credit_score" jsonschema:"Customer credit score (e.g. 720)"`
+	LoanType    string `json:"loan_type" jsonschema:"Type of loan (e.g. 'mortgage', 'cd', 'credit-card')"`
 }
 
 // policyNameToPath maps a normalized policy name to its wiki path.

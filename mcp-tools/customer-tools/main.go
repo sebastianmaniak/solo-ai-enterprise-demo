@@ -17,23 +17,23 @@ var wikiClient *shared.WikiClient
 
 // LookupCustomerArgs is the input schema for the lookup_customer tool.
 type LookupCustomerArgs struct {
-	Name       string `json:"name,omitempty" jsonschema:"description=Customer name to look up"`
-	CustomerID string `json:"customer_id,omitempty" jsonschema:"description=Customer ID (e.g. CUST-00001)"`
+	Name       string `json:"name,omitempty" jsonschema:"Customer name to look up"`
+	CustomerID string `json:"customer_id,omitempty" jsonschema:"Customer ID (e.g. CUST-00001)"`
 }
 
 // SearchCustomersArgs is the input schema for the search_customers tool.
 type SearchCustomersArgs struct {
-	Query string `json:"query" jsonschema:"description=Search query to find customers"`
+	Query string `json:"query" jsonschema:"Search query to find customers"`
 }
 
 // GetAccountBalanceArgs is the input schema for the get_account_balance tool.
 type GetAccountBalanceArgs struct {
-	AccountID string `json:"account_id" jsonschema:"description=Account ID to look up"`
+	AccountID string `json:"account_id" jsonschema:"Account ID to look up"`
 }
 
 // GetTransactionHistoryArgs is the input schema for the get_transaction_history tool.
 type GetTransactionHistoryArgs struct {
-	CustomerID string `json:"customer_id" jsonschema:"description=Customer ID (e.g. CUST-00001)"`
+	CustomerID string `json:"customer_id" jsonschema:"Customer ID (e.g. CUST-00001)"`
 }
 
 func nameToPath(name string) string {

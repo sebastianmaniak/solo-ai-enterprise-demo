@@ -29,7 +29,7 @@
   <h1>Solo Bank<br>AI Enterprise Demo</h1>
   <p>
     A fully functional multi-agent banking demo built on the Solo.io platform —
-    featuring kagent, AgentGateway, AgentRegistry, and MCP tool servers running
+    featuring kagent Enterprise, AgentRegistry, and MCP tool servers running
     end-to-end inside a local Kubernetes cluster.
   </p>
   <div class="hero-actions">
@@ -64,8 +64,8 @@
         <h3>Build Your Own Agent</h3>
         <p>
           Step-by-step tutorial to create a custom MCP tool server in Go, register it in
-          AgentRegistry, wire it to a kagent Agent CRD, and test it live in the cluster —
-          all in under 30 minutes.
+          AgentRegistry, wire it to a kagent Agent CRD via KMCP, and test it live in the
+          cluster — all in under 30 minutes.
         </p>
         <a href="tutorial.html" class="card-link">Start the tutorial</a>
       </div>
@@ -76,7 +76,7 @@
         <h3>Architecture</h3>
         <p>
           Explore the full system architecture: namespace layout, data-flow through
-          AgentGateway, MCP server topology, agent-to-tool access matrix, and component
+          KMCP, MCP server topology, agent-to-tool access matrix, and component
           version table.
         </p>
         <a href="architecture.html" class="card-link">View architecture</a>
@@ -167,28 +167,22 @@
         </thead>
         <tbody>
           <tr>
-            <td><strong>kagent</strong></td>
-            <td>Kubernetes-native agent runtime (CRD-based)</td>
+            <td><strong>kagent Enterprise</strong></td>
+            <td>Kubernetes-native agent runtime (CRD-based), KMCP, Agent/ModelConfig/RemoteMCPServer CRDs</td>
             <td><code>kagent</code></td>
-            <td>Port-forward :3000</td>
-          </tr>
-          <tr>
-            <td><strong>AgentGateway</strong> (Enterprise)</td>
-            <td>MCP proxy with auth, tracing, policy enforcement</td>
-            <td><code>agentgateway-system</code></td>
-            <td>NodePort 30080</td>
-          </tr>
-          <tr>
-            <td><strong>AgentRegistry</strong></td>
-            <td>Skill and tool catalog with REST API</td>
-            <td><code>agentregistry</code></td>
-            <td>NodePort 30121</td>
+            <td>Port-forward :8083</td>
           </tr>
           <tr>
             <td><strong>Management UI</strong></td>
-            <td>OTEL trace viewer and gateway observability</td>
-            <td><code>agentgateway-system</code></td>
-            <td>Port-forward :4000</td>
+            <td>kagent management dashboard (solo-enterprise-ui)</td>
+            <td><code>kagent</code></td>
+            <td>Port-forward :8090</td>
+          </tr>
+          <tr>
+            <td><strong>AgentRegistry</strong> (OSS)</td>
+            <td>Skill and tool catalog with REST API</td>
+            <td><code>agentregistry</code></td>
+            <td>NodePort 30121</td>
           </tr>
           <tr>
             <td><strong>Bank Wiki</strong></td>
@@ -215,15 +209,15 @@
     <div class="footer-versions">
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        kagent v0.3+
+        kagent Enterprise v0.3.14
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        AgentGateway Enterprise v2.2.x
+        Management UI v0.3.14
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
-        AgentRegistry OSS v0.1+
+        AgentRegistry OSS v0.3.3
       </div>
       <div class="footer-version-item">
         <div class="version-dot"></div>
