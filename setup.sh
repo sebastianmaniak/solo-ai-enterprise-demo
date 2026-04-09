@@ -263,27 +263,31 @@ banner "Step 10: Deploy bank wiki and tool servers"
 kubectl apply -f "${SCRIPT_DIR}/manifests/bank-wiki/"
 
 echo "Waiting for bank-wiki-server pods..."
-kubectl wait --for=condition=Ready pod -l app=bank-wiki-server \
+kubectl rollout status deployment/bank-wiki-server \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-customer-tools pods..."
-kubectl wait --for=condition=Ready pod -l app=bank-customer-tools \
+kubectl rollout status deployment/bank-customer-tools \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-policy-tools pods..."
-kubectl wait --for=condition=Ready pod -l app=bank-policy-tools \
+kubectl rollout status deployment/bank-policy-tools \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-transaction-tools pods..."
-kubectl wait --for=condition=Ready pod -l app=bank-transaction-tools \
+kubectl rollout status deployment/bank-transaction-tools \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-status-tools pods..."
-kubectl wait --for=condition=Ready pod -l app=bank-status-tools \
+kubectl rollout status deployment/bank-status-tools \
   -n bank-wiki --timeout=120s
 
 echo "Waiting for bank-incident-tools pods..."
-kubectl wait --for=condition=Ready pod -l app=bank-incident-tools \
+kubectl rollout status deployment/bank-incident-tools \
+  -n bank-wiki --timeout=120s
+
+echo "Waiting for bank-docs-site pods..."
+kubectl rollout status deployment/bank-docs-site \
   -n bank-wiki --timeout=120s
 
 echo -e "${GREEN}Bank wiki and tool servers deployed.${NC}"
