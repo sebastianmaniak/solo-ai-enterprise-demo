@@ -1,1 +1,1 @@
-# kagnet-enterprise-demo
+# Solo Bank Enterprise AI Demo

@@ -1,0 +1,19 @@
+# Environment files
+.env
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Go binaries
+wiki-server/wiki-server
+mcp-tools/customer-tools/customer-tools
+mcp-tools/policy-tools/policy-tools
+mcp-tools/transaction-tools/transaction-tools
+sample-agent/mcp-server/mcp-server
+
+# General build output
+*.exe
+*.dll
+*.so
+*.dylib

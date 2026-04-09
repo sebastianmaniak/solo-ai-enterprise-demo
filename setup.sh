@@ -344,7 +344,7 @@ echo "    Then open: http://localhost:8083"
 echo ""
 if [ -d "${SCRIPT_DIR}/docs-site" ]; then
   echo "  Docs Site:"
-  echo "    kubectl port-forward svc/bank-docs-site -n bank-wiki 8084:80"
+  echo "    kubectl port-forward svc/bank-docs-site -n bank-wiki 8084:8080"
   echo "    Then open: http://localhost:8084"
   echo ""
 fi
