@@ -1,0 +1,10 @@
+# manifests/namespaces.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bank-wiki
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kagent
