@@ -124,19 +124,26 @@ banner "Step 6: Install Management UI"
 
 # --no-hooks: Management UI post-install hooks may timeout in Kind clusters;
 # the core deployment works fine without them.
+# service.type=NodePort: the chart defaults to LoadBalancer services, and
+# Helm --wait is unreliable for this chart on Kind even after the workloads
+# themselves are healthy. Install first, then wait on the concrete workloads.
 helm upgrade --install management \
   oci://us-docker.pkg.dev/solo-public/solo-enterprise-helm/charts/management \
   --namespace kagent \
   --version 0.3.14 \
   --set cluster="solo-bank-demo" \
+  --set service.type=NodePort \
   --set products.kagent.enabled=true \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
-  --no-hooks --wait --timeout 300s
+  --no-hooks
 
-echo "Waiting for Management UI pods to be ready..."
-kubectl wait --for=condition=Available deployment/solo-enterprise-ui \
-  -n kagent --timeout=180s 2>/dev/null || \
-  warn "Management UI deployment not ready yet — kagent may need a restart."
+echo "Waiting for Management UI workloads to be ready..."
+kubectl rollout status statefulset/management-clickhouse-shard0 \
+  -n kagent --timeout=300s
+kubectl rollout status statefulset/solo-enterprise-telemetry-collector \
+  -n kagent --timeout=300s
+kubectl rollout status deployment/solo-enterprise-ui \
+  -n kagent --timeout=300s
 
 # Expose Management UI on NodePort 30090 (mapped in kind-config.yaml)
 echo "Patching Management UI service to NodePort 30090..."
