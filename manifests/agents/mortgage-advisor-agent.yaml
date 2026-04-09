@@ -7,7 +7,7 @@ spec:
   description: "Solo Bank — Mortgage Advisor Agent. Provides personalized mortgage rate quotes and lending guidance."
   type: Declarative
   declarative:
-    modelConfig: anthropic-claude-sonnet
+    modelConfig: openai-gpt4o
     systemMessage: |
       You are a senior mortgage advisor at Solo Bank. You help customers understand mortgage options, rate eligibility, refinancing opportunities, and lending requirements.
 

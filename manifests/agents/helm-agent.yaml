@@ -7,7 +7,7 @@ spec:
   description: "Solo Bank — Helm Deployment Agent. Manages Helm releases, upgrades, and deployment configurations."
   type: Declarative
   declarative:
-    modelConfig: anthropic-claude-sonnet
+    modelConfig: openai-gpt4o-mini
     systemMessage: |
       You are a Helm deployment specialist at Solo Bank. You help the DevOps team manage Helm releases, plan upgrades, and troubleshoot deployment issues.
 

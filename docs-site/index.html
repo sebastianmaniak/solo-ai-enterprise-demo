@@ -51,9 +51,9 @@
         <div class="card-icon">📖</div>
         <h3>Usage Guide</h3>
         <p>
-          Learn how to interact with the seven banking agents — Triage, Customer Service,
-          Mortgage Advisor, Compliance, Kubernetes, Helm, and IT Support. Includes example
-          prompts, identity verification flows, and how to view OTEL traces.
+          Learn how to interact with the eight banking agents — Triage, Customer Service,
+          Mortgage Advisor, Compliance, Kubernetes, Helm, IT Support, and Infrastructure Support.
+          Includes example prompts, identity verification flows, and how to view OTEL traces.
         </p>
         <a href="guide.html" class="card-link">Read the guide</a>
       </div>
@@ -88,15 +88,15 @@
   <!-- What's in the demo -->
   <section class="section" style="padding-top: 0;">
     <h2 class="section-title">What's in the Demo</h2>
-    <p class="section-subtitle">Seven specialist agents, three MCP tool servers, and a full observability pipeline.</p>
+    <p class="section-subtitle">Eight specialist agents (including a multi-agent infrastructure coordinator), three MCP tool servers, and a full observability pipeline.</p>
 
     <div class="cards">
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-triage-agent" data-model="Claude Sonnet" data-tools="None — pure routing" data-prompts="I want to check my account balance|What mortgage rate can I get?|I see a suspicious charge on my account|I need help with an IT issue">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-triage-agent" data-model="GPT-4o" data-tools="None — pure routing" data-prompts="I want to check my account balance|What mortgage rate can I get?|I see a suspicious charge on my account|I need help with an IT issue">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Triage Agent</h3>
         <p>
           Front-door router. Greets customers, understands intent, and routes to the correct
-          specialist. Powered by <strong>Claude Sonnet</strong>. No tools — pure routing logic.
+          specialist. Powered by <strong>GPT-4o</strong>. No tools — pure routing logic.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>
@@ -112,24 +112,23 @@
         <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-mortgage-advisor-agent" data-model="Claude Sonnet" data-tools="customer-tools, policy-tools" data-prompts="What rate would CUST-00042 get on a 30-year fixed?|Can CUST-00003 qualify for a 15-year mortgage?|What's the minimum down payment for a jumbo loan?|What does refinancing look like for a 680 credit score?">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-mortgage-advisor-agent" data-model="GPT-4o" data-tools="customer-tools, policy-tools" data-prompts="What rate would CUST-00042 get on a 30-year fixed?|Can CUST-00003 qualify for a 15-year mortgage?|What's the minimum down payment for a jumbo loan?|What does refinancing look like for a 680 credit score?">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Mortgage Advisor Agent</h3>
         <p>
           Provides personalized mortgage rate quotes by looking up customer credit scores,
           applying rate tables, and checking lending policies. Powered by
-          <strong>Claude Sonnet</strong>.
+          <strong>GPT-4o</strong>.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-compliance-agent" data-model="Claude Sonnet" data-tools="customer-tools, policy-tools, transaction-tools" data-prompts="Review CUST-00003 for compliance issues|Check AML red flags in the last 90 days|Is CUST-00042 getting the correct rate for their credit tier?|Audit customers with international wire transfers">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-compliance-agent" data-model="GPT-4o" data-tools="customer-tools, policy-tools, transaction-tools" data-prompts="Review CUST-00003 for compliance issues|Check AML red flags in the last 90 days|Is CUST-00042 getting the correct rate for their credit tier?|Audit customers with international wire transfers">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Compliance Agent</h3>
         <p>
           Internal-only agent for policy audits and AML/KYC review. Has full access to all
-          customer data, transactions, and bank policies. Generates structured compliance
-          reports.
+          customer data, transactions, and bank policies. Powered by <strong>GPT-4o</strong>.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>
@@ -145,24 +144,36 @@
         <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-helm-agent" data-model="Claude Sonnet" data-tools="None — knowledge-based" data-prompts="What Helm releases are installed?|How do I upgrade kagent-enterprise?|What's the correct install order?|How do I roll back management UI?">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-helm-agent" data-model="GPT-4o Mini" data-tools="None — knowledge-based" data-prompts="What Helm releases are installed?|How do I upgrade kagent-enterprise?|What's the correct install order?|How do I roll back management UI?">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Helm Agent</h3>
         <p>
           Helm deployment specialist. Manages release configurations, plans upgrades, and
           troubleshoots chart issues for kagent-enterprise and related components.
-          Powered by <strong>Claude Sonnet</strong>.
+          Powered by <strong>GPT-4o Mini</strong>.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-it-agent" data-model="Claude Sonnet" data-tools="customer-tools, transaction-tools, policy-tools" data-prompts="Customer can't see their balance — investigate|Rate quotes seem wrong for Good tier|New employee needs system access|Transaction searches are returning errors">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-it-agent" data-model="GPT-4o" data-tools="customer-tools, transaction-tools, policy-tools" data-prompts="Customer can't see their balance — investigate|Rate quotes seem wrong for Good tier|New employee needs system access|Transaction searches are returning errors">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>IT Support Agent</h3>
         <p>
           IT support lead handling internal tickets, system troubleshooting, and cross-team
           coordination. Has access to customer, transaction, and policy tools. Powered by
-          <strong>Claude Sonnet</strong>.
+          <strong>GPT-4o</strong>.
+        </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-infra-support-agent" data-model="Claude Sonnet" data-tools="customer-tools, policy-tools, transaction-tools" data-prompts="An agent can't reach its MCP tools — diagnose the full chain|We need to upgrade kagent — what's the full checklist?|The Management UI is down — walk me through the investigation|Run a health check across all infrastructure layers">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <span class="badge" style="margin-bottom: 14px; background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 100px;">Multi-Agent</span>
+        <h3>Infrastructure Support Agent</h3>
+        <p>
+          Multi-domain coordinator powered by <strong>Claude Sonnet</strong>. Diagnoses issues
+          across Kubernetes, Helm, and IT systems — connecting dots that single-domain agents miss.
+          Has full tool access for end-to-end investigation.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>

@@ -7,7 +7,7 @@ spec:
   description: "Solo Bank — Compliance Agent. Internal-only agent for policy audits, fraud review, and regulatory compliance checks."
   type: Declarative
   declarative:
-    modelConfig: anthropic-claude-sonnet
+    modelConfig: openai-gpt4o
     systemMessage: |
       You are an internal compliance officer at Solo Bank. You review customer accounts for policy violations, suspicious transactions, and regulatory concerns. You are NOT customer-facing — you serve internal bank staff.
 
