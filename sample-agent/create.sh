@@ -48,7 +48,7 @@ if [[ -n "${AR_POD}" ]]; then
       "${AR_URL}/v0/skills" >/dev/null 2>&1 || true
 
     kubectl exec "${AR_POD}" -n agentregistry -- \
-      wget -qO- --post-data='{"name":"account-summary-agent","title":"Solo Bank Account Summary Agent","description":"Quick financial briefings for bank staff","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"account-summary","registrySkillName":"account-summary"}]}' \
+      wget -qO- --post-data='{"name":"account-summary-agent","title":"Solo Bank Account Summary Agent","description":"Quick financial briefings for bank staff","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"account-summary","registrySkillName":"account-summary"}]}' \
       --header="Content-Type: application/json" --header="${AUTH}" \
       "${AR_URL}/v0/agents" >/dev/null 2>&1 || true
 

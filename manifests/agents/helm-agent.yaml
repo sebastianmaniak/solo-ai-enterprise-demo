@@ -41,4 +41,36 @@ spec:
       - Recommend --wait flag for production installs
       - Explain the install order: CRDs -> Management UI -> kagent-enterprise
       - Note that Management UI must be installed before kagent-enterprise (OIDC dependency)
+    a2aConfig:
+      skills:
+        - id: release-management
+          name: Release Management
+          description: Query and manage Helm releases in the cluster.
+          tags:
+            - helm
+            - releases
+          examples:
+            - "What Helm releases are installed?"
+            - "Show me the values for kagent-enterprise"
+            - "What version of the CRDs chart is running?"
+        - id: upgrade-planning
+          name: Upgrade Planning
+          description: Plan and execute Helm chart upgrades safely.
+          tags:
+            - helm
+            - upgrades
+          examples:
+            - "How do I upgrade kagent-enterprise?"
+            - "What's the correct install order for the charts?"
+            - "Are there breaking changes between versions?"
+        - id: rollback
+          name: Rollback Procedures
+          description: Guide on rolling back Helm releases when issues occur.
+          tags:
+            - helm
+            - rollback
+          examples:
+            - "How do I roll back the management UI?"
+            - "The last upgrade broke something — what do I do?"
+            - "Show me the Helm release history"
     tools: []

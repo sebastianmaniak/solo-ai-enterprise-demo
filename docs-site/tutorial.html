@@ -3,100 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Build Your Own Agent — Solo Bank AI Enterprise Demo</title>
+  <title>What Can You Build? — Solo Bank AI Enterprise Demo</title>
   <link rel="stylesheet" href="static/style.css" />
   <style>
-    /* ── Wizard ── */
-    .wizard { max-width: 960px; margin: 0 auto; padding: 0 24px 80px; }
+    .use-cases { max-width: 1100px; margin: 0 auto; padding: 0 24px 80px; }
 
-    /* Stepper */
-    .stepper { display: flex; align-items: flex-start; justify-content: center; gap: 0; margin: 40px 0 48px; position: relative; }
-    .stepper::before { content: ''; position: absolute; top: 20px; left: 25%; right: 25%; height: 3px; background: var(--border); z-index: 0; }
-    .stepper-progress { position: absolute; top: 20px; left: 25%; height: 3px; background: var(--primary); z-index: 1; transition: width 0.5s ease; width: 0; }
-    .stepper-step { display: flex; flex-direction: column; align-items: center; position: relative; z-index: 2; cursor: pointer; width: 160px; }
-    .stepper-dot { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); border: 3px solid var(--border); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; color: var(--text-muted); transition: all 0.3s ease; }
-    .stepper-step.active .stepper-dot { border-color: var(--primary); background: var(--primary); color: white; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.15); }
-    .stepper-step.done .stepper-dot { border-color: var(--secondary); background: var(--secondary); color: white; }
-    .stepper-label { margin-top: 10px; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-align: center; }
-    .stepper-step.active .stepper-label { color: var(--primary); }
-    .stepper-step.done .stepper-label { color: var(--secondary); }
+    /* Category tabs */
+    .category-tabs {
+      display: flex; gap: 8px; justify-content: center; margin: 32px 0 40px;
+      flex-wrap: wrap;
+    }
+    .category-tab {
+      padding: 10px 22px; border-radius: 100px; font-size: 0.85rem;
+      font-weight: 600; cursor: pointer; border: 2px solid var(--border);
+      background: var(--surface); color: var(--text-muted); transition: all 0.2s;
+      font-family: var(--font);
+    }
+    .category-tab:hover { border-color: var(--primary); color: var(--primary); }
+    .category-tab.active {
+      background: var(--primary); border-color: var(--primary); color: white;
+    }
 
-    /* Panels */
-    .step-panel { display: none; animation: fadeIn 0.3s ease; }
-    .step-panel.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    /* Use case cards */
+    .uc-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px; margin-bottom: 48px;
+    }
+    .uc-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; transition: all 0.2s;
+      display: flex; flex-direction: column;
+    }
+    .uc-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .uc-card.hidden { display: none; }
 
-    .step-header { margin-bottom: 28px; }
-    .step-header h2 { font-size: 1.5rem; font-weight: 800; margin: 0 0 8px; border: none; padding: 0; }
-    .step-header p { color: var(--text-muted); font-size: 1rem; margin: 0; }
+    .uc-badges { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .uc-badge {
+      font-size: 0.65rem; font-weight: 700; padding: 3px 10px;
+      border-radius: 100px; text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .uc-badge-agent { background: #dbeafe; color: #1d4ed8; }
+    .uc-badge-skill { background: #fef3c7; color: #92400e; }
+    .uc-badge-mcp { background: #dcfce7; color: #166534; }
+    .uc-badge-multi { background: #f3e8ff; color: #6b21a8; }
 
-    /* Code blocks */
-    .code-block { margin: 16px 0 20px; border-radius: var(--radius); overflow: hidden; border: 1px solid #1e293b; }
-    .code-header { background: #1e293b; padding: 8px 16px; display: flex; align-items: center; justify-content: space-between; }
-    .code-filename { font-family: var(--font-mono); font-size: 0.8rem; color: #94a3b8; font-weight: 500; display: flex; align-items: center; gap: 8px; }
-    .code-filename .dot { width: 8px; height: 8px; border-radius: 50%; }
-    .code-filename .dot.shell { background: #4ade80; }
-    .code-filename .dot.yaml { background: #f59e0b; }
-    .code-filename .dot.go { background: #00ADD8; }
-    .code-block pre { margin: 0; border: none !important; border-radius: 0; }
-    .code-block pre code { font-size: 0.85rem; background: none !important; border: none !important; padding: 0 !important; display: block; }
+    .uc-card h3 { font-size: 1.1rem; font-weight: 700; margin: 0 0 10px; color: var(--text); }
+    .uc-card p { font-size: 0.9rem; color: var(--text-muted); margin: 0 0 16px; flex: 1; line-height: 1.6; }
 
-    .btn-copy { padding: 4px 12px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; border: 1px solid #475569; background: transparent; color: #94a3b8; transition: all 0.15s; font-family: var(--font); }
-    .btn-copy:hover { background: #334155; color: #e2e8f0; }
-    .btn-copy.copied { background: var(--secondary); border-color: var(--secondary); color: white; }
+    .uc-examples { margin: 0; padding: 0; list-style: none; }
+    .uc-examples li {
+      font-size: 0.82rem; color: var(--text-muted); padding: 6px 0;
+      border-top: 1px solid var(--border); display: flex; align-items: flex-start; gap: 8px;
+    }
+    .uc-examples li:first-child { border-top: none; }
+    .uc-examples li::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--primary); flex-shrink: 0; margin-top: 7px; }
 
-    /* Architecture visual */
-    .arch-visual { background: var(--code-bg); border-radius: var(--radius); padding: 28px; margin: 24px 0; border: 1px solid #1e293b; text-align: center; }
-    .arch-row { display: flex; justify-content: center; gap: 16px; margin: 6px 0; flex-wrap: wrap; }
-    .arch-node { padding: 10px 18px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; text-align: center; font-family: var(--font-mono); border: 2px solid; min-width: 120px; }
-    .arch-node.agent { background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; color: #93c5fd; }
-    .arch-node.tool { background: rgba(34, 197, 94, 0.1); border-color: #22c55e; color: #86efac; }
-    .arch-node.registry { background: rgba(251, 191, 36, 0.1); border-color: #fbbf24; color: #fde68a; }
-    .arch-node.k8s { background: rgba(168, 85, 247, 0.1); border-color: #a855f7; color: #d8b4fe; }
-    .arch-node.new { animation: pulseGlow 2s infinite; }
-    @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); } }
-    .arch-arrow { color: #475569; font-size: 1.1rem; margin: 4px 0; }
-    .arch-label { color: #64748b; font-size: 0.7rem; margin-top: 2px; font-family: var(--font); }
+    .uc-tech {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+    .uc-tech-tag {
+      font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 4px;
+      background: var(--surface-alt); color: var(--text-muted); font-family: var(--font-mono);
+    }
 
-    /* Details/expand */
-    details { margin: 16px 0; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-    details summary { padding: 12px 18px; font-weight: 600; font-size: 0.9rem; cursor: pointer; background: var(--surface-alt); color: var(--text-muted); user-select: none; }
-    details summary:hover { color: var(--text); }
-    details[open] summary { border-bottom: 1px solid var(--border); }
-    details .details-body { padding: 16px 18px; }
-    details .details-body p { font-size: 0.9rem; margin-bottom: 12px; }
+    /* Section headers */
+    .uc-section {
+      margin: 48px 0 24px; padding-bottom: 12px;
+      border-bottom: 2px solid var(--border);
+    }
+    .uc-section h2 { font-size: 1.4rem; font-weight: 800; margin: 0 0 8px; border: none; padding: 0; }
+    .uc-section p { color: var(--text-muted); font-size: 0.95rem; margin: 0; }
 
-    /* Nav */
-    .step-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border); }
-    .btn-nav { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: var(--radius); font-size: 0.95rem; font-weight: 600; cursor: pointer; border: 2px solid; transition: all 0.2s; font-family: var(--font); }
-    .btn-prev { background: var(--surface); border-color: var(--border); color: var(--text-muted); }
-    .btn-prev:hover { border-color: var(--text-muted); color: var(--text); }
-    .btn-next { background: var(--primary); border-color: var(--primary); color: white; }
-    .btn-next:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
-    .btn-next.danger { background: var(--accent); border-color: var(--accent); }
-    .btn-next.danger:hover { background: #dc2626; border-color: #dc2626; }
-    .btn-next.complete { background: var(--secondary); border-color: var(--secondary); }
+    /* Architecture diagram */
+    .arch-overview {
+      background: var(--code-bg); border-radius: var(--radius); padding: 32px;
+      margin: 32px 0; border: 1px solid #1e293b; text-align: center;
+    }
+    .arch-layer {
+      display: flex; justify-content: center; gap: 12px; margin: 8px 0;
+      flex-wrap: wrap;
+    }
+    .arch-box {
+      padding: 10px 18px; border-radius: 6px; font-size: 0.8rem;
+      font-weight: 600; font-family: var(--font-mono); border: 2px solid;
+      min-width: 110px; text-align: center;
+    }
+    .arch-box.user { background: rgba(251,191,36,0.1); border-color: #fbbf24; color: #fde68a; }
+    .arch-box.agent { background: rgba(59,130,246,0.1); border-color: #3b82f6; color: #93c5fd; }
+    .arch-box.skill { background: rgba(168,85,247,0.1); border-color: #a855f7; color: #d8b4fe; }
+    .arch-box.mcp { background: rgba(34,197,94,0.1); border-color: #22c55e; color: #86efac; }
+    .arch-box.data { background: rgba(239,68,68,0.1); border-color: #ef4444; color: #fca5a5; }
+    .arch-arrow { color: #475569; font-size: 1rem; margin: 4px 0; }
+    .arch-label { color: #64748b; font-size: 0.72rem; margin-top: 4px; font-family: var(--font); }
 
-    /* Prompt examples */
-    .prompts { margin: 16px 0 24px; }
+    /* Stats bar */
+    .stats-bar {
+      display: flex; justify-content: center; gap: 40px; margin: 32px 0;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-number { font-size: 2rem; font-weight: 800; color: var(--primary); }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
 
-    /* Expected output */
-    .output-box { background: #0c0c0c; border: 1px solid #1e293b; border-radius: var(--radius); margin: 16px 0; overflow: hidden; }
-    .output-header { background: #1a1a1a; padding: 8px 14px; display: flex; align-items: center; gap: 8px; }
-    .output-dots { display: flex; gap: 5px; }
-    .output-dots span { width: 10px; height: 10px; border-radius: 50%; }
-    .output-dots span:nth-child(1) { background: #ff5f57; }
-    .output-dots span:nth-child(2) { background: #febc2e; }
-    .output-dots span:nth-child(3) { background: #28c840; }
-    .output-title { font-family: var(--font-mono); font-size: 0.75rem; color: #666; margin-left: 8px; }
-    .output-body { padding: 16px 20px; font-family: var(--font-mono); font-size: 0.82rem; color: #a3a3a3; line-height: 1.65; white-space: pre-wrap; }
-    .output-body .g { color: #4ade80; }
-    .output-body .b { color: #60a5fa; }
-    .output-body .y { color: #fbbf24; }
-
-    /* Completion */
-    .done-banner { text-align: center; padding: 40px 0 24px; }
-    .done-banner h2 { border: none; padding: 0; margin-bottom: 8px; }
+    @media (max-width: 720px) {
+      .uc-grid { grid-template-columns: 1fr; }
+      .stats-bar { gap: 24px; }
+    }
   </style>
 </head>
 <body>
@@ -110,7 +123,7 @@
     </a>
     <ul class="nav-links">
       <li><a href="guide.html">Usage Guide</a></li>
-      <li><a href="tutorial.html" class="active">Tutorial</a></li>
+      <li><a href="tutorial.html" class="active">Use Cases</a></li>
       <li><a href="architecture.html">Architecture</a></li>
     </ul>
   </div>
@@ -119,350 +132,562 @@
 <!-- Page Header -->
 <div class="page-header">
   <div class="container">
-    <h1>Build an Account Summary Agent</h1>
-    <p>One script to create it. One prompt to test it. One script to clean up.</p>
+    <h1>What Can You Build?</h1>
+    <p>Agents, skills, and MCP tool servers — the building blocks of AI-powered enterprise applications.</p>
   </div>
 </div>
 
-<div class="wizard">
+<div class="use-cases">
 
-  <!-- Stepper -->
-  <div class="stepper">
-    <div class="stepper-progress" id="stepper-progress"></div>
-    <div class="stepper-step active" onclick="goToStep(0)">
-      <div class="stepper-dot">1</div>
-      <div class="stepper-label">Create</div>
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number">11</div>
+      <div class="stat-label">AI Agents</div>
     </div>
-    <div class="stepper-step" onclick="goToStep(1)">
-      <div class="stepper-dot">2</div>
-      <div class="stepper-label">Test</div>
+    <div class="stat-item">
+      <div class="stat-number">5</div>
+      <div class="stat-label">MCP Servers</div>
     </div>
-    <div class="stepper-step" onclick="goToStep(2)">
-      <div class="stepper-dot">3</div>
-      <div class="stepper-label">Clean Up</div>
+    <div class="stat-item">
+      <div class="stat-number">33</div>
+      <div class="stat-label">Skills</div>
     </div>
-  </div>
-
-  <!-- ================================================================ -->
-  <!-- STEP 1: CREATE                                                   -->
-  <!-- ================================================================ -->
-  <div class="step-panel active" data-step="0">
-    <div class="step-header">
-      <h2>Step 1: Create the Agent</h2>
-      <p>One command builds an MCP tool server, deploys it, wires it to kagent, and registers it in AgentRegistry.</p>
-    </div>
-
-    <!-- What you're building -->
-    <div class="arch-visual">
-      <div class="arch-label" style="margin-bottom: 12px; font-size: 0.8rem; color: #94a3b8;">What gets created</div>
-      <div class="arch-row"><div class="arch-node agent">Management UI</div></div>
-      <div class="arch-arrow">&#8595; chat</div>
-      <div class="arch-row"><div class="arch-node agent new">account-summary-agent</div></div>
-      <div class="arch-arrow">&#8595; MCP tool call</div>
-      <div class="arch-row"><div class="arch-node k8s">RemoteMCPServer CRD</div></div>
-      <div class="arch-arrow">&#8595; streamable-http</div>
-      <div class="arch-row"><div class="arch-node tool new">account-summary-tools :8085</div></div>
-      <div class="arch-arrow">&#8595; fetches data</div>
-      <div class="arch-row"><div class="arch-node tool">bank-wiki-server :8080</div></div>
-      <div class="arch-label">Real customer data from the wiki</div>
-    </div>
-
-    <!-- The command -->
-    <div class="code-block">
-      <div class="code-header">
-        <span class="code-filename"><span class="dot shell"></span> Run from the project root</span>
-        <button class="btn-copy" onclick="copyCode(this)">Copy</button>
-      </div>
-      <pre><code>./sample-agent/create.sh</code></pre>
-    </div>
-
-    <!-- Expected output -->
-    <div class="output-box">
-      <div class="output-header">
-        <div class="output-dots"><span></span><span></span><span></span></div>
-        <div class="output-title">Expected Output</div>
-      </div>
-      <div class="output-body"><span class="g">&#9656; Building Docker image...</span>
-<span style="color:#525252">[+] Building 14.2s (10/10) FINISHED</span>
-
-<span class="g">&#9656; Loading image into Kind cluster...</span>
-Image: "account-summary-tools:latest" loaded
-
-<span class="g">&#9656; Deploying MCP tool server to bank-wiki namespace...</span>
-deployment.apps/account-summary-tools created
-service/account-summary-tools created
-pod/account-summary-tools-7f8b9c-x2k9m condition met
-
-<span class="g">&#9656; Creating RemoteMCPServer CRD...</span>
-remotemcpserver.kagent.dev/account-summary-tools created
-
-<span class="g">&#9656; Creating Agent CRD...</span>
-agent.kagent.dev/account-summary-agent created
-
-<span class="g">&#9656; Waiting for agent to be ready...</span>
-NAME                     TYPE          READY   ACCEPTED
-account-summary-agent    Declarative   True    True
-
-<span class="g">&#9656; Registering in AgentRegistry...</span>
-  <span class="g">[OK]</span> Registered in AgentRegistry
-
-<span class="g">============================================================</span>
-<span class="g">  Account Summary Agent is live!</span>
-<span class="g">============================================================</span></div>
-    </div>
-
-    <!-- Expandable: what the script does -->
-    <details>
-      <summary>See what the script does</summary>
-      <div class="details-body">
-        <p>The <code>create.sh</code> script runs 6 steps in order:</p>
-        <ol>
-          <li><strong>Build</strong> — Compiles a Go MCP tool server into a Docker image</li>
-          <li><strong>Load</strong> — Pushes the image into the Kind cluster (no registry needed)</li>
-          <li><strong>Deploy</strong> — Creates a Deployment + Service in the <code>bank-wiki</code> namespace</li>
-          <li><strong>RemoteMCPServer</strong> — Creates a CRD so kagent discovers the tool via MCP protocol</li>
-          <li><strong>Agent</strong> — Creates an Agent CRD with system prompt and tool reference</li>
-          <li><strong>Register</strong> — Adds the agent and skill to the AgentRegistry catalog</li>
-        </ol>
-      </div>
-    </details>
-
-    <!-- Expandable: the Go code -->
-    <details>
-      <summary>See the MCP server code (Go)</summary>
-      <div class="details-body">
-        <p>The tool server connects to the bank wiki to fetch real customer data:</p>
-        <div class="code-block">
-          <div class="code-header">
-            <span class="code-filename"><span class="dot go"></span> sample-agent/mcp-server/main.go (key parts)</span>
-            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
-          </div>
-          <pre><code>// Tool handler — fetches customer page from the wiki, extracts summary
-func handleGetAccountSummary(ctx context.Context, req *mcp.CallToolRequest,
-    args GetAccountSummaryArgs) (*mcp.CallToolResult, any, error) {
-
-    namePath := strings.ToLower(strings.ReplaceAll(args.CustomerName, " ", "-"))
-    pageURL := fmt.Sprintf("%s/wiki/customers/%s", wikiBaseURL, namePath)
-
-    resp, err := httpClient.Get(pageURL)
-    // ... parse wiki markdown, extract credit score, balances, flags ...
-
-    return &amp;mcp.CallToolResult{
-        Content: []mcp.Content{&amp;mcp.TextContent{Text: summary}},
-    }, nil, nil
-}
-
-func main() {
-    server := mcp.NewServer(&amp;mcp.Implementation{
-        Name: "account-summary-tools", Version: "1.0.0",
-    }, nil)
-
-    mcp.AddTool(server, &amp;mcp.Tool{
-        Name:        "get_account_summary",
-        Description: "Get a brief account summary for a Solo Bank customer.",
-    }, handleGetAccountSummary)
-
-    handler := mcp.NewStreamableHTTPHandler(
-        func(r *http.Request) *mcp.Server { return server }, nil)
-
-    mux := http.NewServeMux()
-    mux.Handle("/mcp", handler)
-    mux.Handle("/mcp/", handler)
-    http.ListenAndServe(":8085", mux)
-}</code></pre>
-        </div>
-      </div>
-    </details>
-
-    <!-- Expandable: the YAML -->
-    <details>
-      <summary>See the Kubernetes manifests</summary>
-      <div class="details-body">
-        <div class="code-block">
-          <div class="code-header">
-            <span class="code-filename"><span class="dot yaml"></span> sample-agent/manifests/agent.yaml</span>
-            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
-          </div>
-          <pre><code>apiVersion: kagent.dev/v1alpha2
-kind: Agent
-metadata:
-  name: account-summary-agent
-  namespace: kagent
-spec:
-  description: "Solo Bank — Account Summary Agent."
-  type: Declarative
-  declarative:
-    modelConfig: anthropic-claude-sonnet
-    systemMessage: |
-      You are an account summary specialist at Solo Bank.
-      Use the get_account_summary tool to fetch customer data
-      and present it as a brief, structured summary.
-    tools:
-    - type: McpServer
-      mcpServer:
-        name: account-summary-tools
-        kind: RemoteMCPServer</code></pre>
-        </div>
-        <div class="code-block">
-          <div class="code-header">
-            <span class="code-filename"><span class="dot yaml"></span> sample-agent/manifests/remote-mcp-server.yaml</span>
-            <button class="btn-copy" onclick="copyCode(this)">Copy</button>
-          </div>
-          <pre><code>apiVersion: kagent.dev/v1alpha2
-kind: RemoteMCPServer
-metadata:
-  name: account-summary-tools
-  namespace: kagent
-spec:
-  url: http://account-summary-tools.bank-wiki.svc.cluster.local:8085/mcp
-  protocol: STREAMABLE_HTTP</code></pre>
-        </div>
-      </div>
-    </details>
-
-    <div class="step-nav">
-      <div></div>
-      <button class="btn-nav btn-next" onclick="nextStep()">Next: Test It &#8594;</button>
+    <div class="stat-item">
+      <div class="stat-number">2</div>
+      <div class="stat-label">Multi-Agent Systems</div>
     </div>
   </div>
 
-  <!-- ================================================================ -->
-  <!-- STEP 2: TEST                                                     -->
-  <!-- ================================================================ -->
-  <div class="step-panel" data-step="1">
-    <div class="step-header">
-      <h2>Step 2: Test the Agent</h2>
-      <p>Open the Management UI, select the agent, and ask it about a customer.</p>
+  <!-- Architecture Overview -->
+  <div class="arch-overview">
+    <div class="arch-label" style="margin-bottom: 12px; font-size: 0.85rem; color: #94a3b8;">How it all connects</div>
+    <div class="arch-layer"><div class="arch-box user">User / Management UI</div></div>
+    <div class="arch-arrow">&#8595; chat</div>
+    <div class="arch-layer">
+      <div class="arch-box agent">Triage Agent</div>
     </div>
-
-    <p>Open <a href="http://localhost:30090" target="_blank"><strong>http://localhost:30090</strong></a> (Management UI), select <strong>account-summary-agent</strong> from the dropdown, and try:</p>
-
-    <div class="prompts">
-      <div class="prompt-example">Give me a summary for Maria Garcia</div>
-      <div class="prompt-example">What's the overview for James Wilson?</div>
-      <div class="prompt-example">Summarize John Smith's accounts</div>
+    <div class="arch-arrow">&#8595; routes to specialist</div>
+    <div class="arch-layer">
+      <div class="arch-box agent">Customer<br>Service</div>
+      <div class="arch-box agent">Mortgage<br>Advisor</div>
+      <div class="arch-box agent">Ops<br>Monitor</div>
+      <div class="arch-box agent">Incident<br>Manager</div>
+      <div class="arch-box agent">K8s Agent</div>
+      <div class="arch-box agent">+ 5 more</div>
     </div>
-
-    <h3 style="font-size: 1rem; margin-top: 28px;">What happens behind the scenes</h3>
-
-    <div class="arch-visual" style="padding: 20px;">
-      <div class="arch-row">
-        <div class="arch-node agent" style="min-width: 80px;">You</div>
-        <div style="color: #475569; align-self: center;">&#8594;</div>
-        <div class="arch-node agent" style="min-width: 140px;">account-summary-agent</div>
-        <div style="color: #475569; align-self: center;">&#8594;</div>
-        <div class="arch-node tool" style="min-width: 140px;">get_account_summary</div>
-        <div style="color: #475569; align-self: center;">&#8594;</div>
-        <div class="arch-node tool" style="min-width: 100px;">bank-wiki</div>
-      </div>
-      <div class="arch-label" style="margin-top: 10px;">Prompt &#8594; Agent &#8594; MCP Tool Call &#8594; Wiki Lookup &#8594; Structured Response</div>
+    <div class="arch-arrow">&#8595; MCP tool calls / agent delegation</div>
+    <div class="arch-layer">
+      <div class="arch-box mcp">Customer<br>Tools</div>
+      <div class="arch-box mcp">Policy<br>Tools</div>
+      <div class="arch-box mcp">Transaction<br>Tools</div>
+      <div class="arch-box mcp">Status<br>Tools</div>
+      <div class="arch-box mcp">Incident<br>Tools</div>
     </div>
-
-    <h3 style="font-size: 1rem; margin-top: 28px;">Expected Response</h3>
-
-    <div class="output-box">
-      <div class="output-header">
-        <div class="output-dots"><span></span><span></span><span></span></div>
-        <div class="output-title">account-summary-agent</div>
-      </div>
-      <div class="output-body"><span class="b">## Account Summary: Maria Garcia</span>
-
-- <strong>ID:</strong> CUST-00042
-- <strong>Credit Score:</strong> 742
-- <strong>Risk:</strong> Low
-- <strong>Employment:</strong> Senior Software Engineer at TechCorp
-
-<span class="b">### Balances</span>
-- Checking Balance: $4,280.50
-- Savings Balance: $18,920.00
-- CD Balance: $5,250.00
-
-No flags or compliance concerns. Long-standing customer (6 years).</div>
-    </div>
-
-    <div class="callout callout-tip">
-      <div class="callout-icon">&#128161;</div>
-      <div class="callout-body">
-        <strong>It's using real data</strong>
-        The agent calls the MCP tool server, which fetches the actual customer page from the
-        bank wiki. Try any customer name from the wiki &mdash; the response will reflect their
-        real profile data.
-      </div>
-    </div>
-
-    <div class="step-nav">
-      <button class="btn-nav btn-prev" onclick="prevStep()">&#8592; Back</button>
-      <button class="btn-nav btn-next danger" onclick="nextStep()">Next: Clean Up &#8594;</button>
+    <div class="arch-arrow">&#8595; data</div>
+    <div class="arch-layer">
+      <div class="arch-box data">Simulated Banking Data</div>
+      <div class="arch-box data">Live K8s Cluster</div>
     </div>
   </div>
 
-  <!-- ================================================================ -->
-  <!-- STEP 3: CLEAN UP                                                 -->
-  <!-- ================================================================ -->
-  <div class="step-panel" data-step="2">
-    <div class="step-header">
-      <h2>Step 3: Clean Up</h2>
-      <p>Remove everything the tutorial created. The rest of the Solo Bank demo stays untouched.</p>
+  <!-- Filter Tabs -->
+  <div class="category-tabs">
+    <button class="category-tab active" onclick="filterCards('all')">All</button>
+    <button class="category-tab" onclick="filterCards('agent')">Agents</button>
+    <button class="category-tab" onclick="filterCards('multi-agent')">Multi-Agent</button>
+    <button class="category-tab" onclick="filterCards('mcp')">MCP Servers</button>
+    <button class="category-tab" onclick="filterCards('skill')">Skills</button>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- AGENT USE CASES                                               -->
+  <!-- ============================================================ -->
+
+  <div class="uc-grid">
+
+    <!-- Customer-Facing Agents -->
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
+      </div>
+      <h3>Customer Service Chatbot</h3>
+      <p>
+        A customer-facing agent that handles account inquiries, balance checks, and transaction reviews.
+        Verifies identity before sharing sensitive data. Uses lightweight models (GPT-4o Mini) to keep
+        costs low for high-volume interactions.
+      </p>
+      <ul class="uc-examples">
+        <li>Account balance and transaction lookups</li>
+        <li>Identity verification flows</li>
+        <li>Dispute filing and escalation</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o Mini</span>
+        <span class="uc-tech-tag">customer-tools</span>
+        <span class="uc-tech-tag">transaction-tools</span>
+      </div>
     </div>
 
-    <div class="code-block">
-      <div class="code-header">
-        <span class="code-filename"><span class="dot shell"></span> Run from the project root</span>
-        <button class="btn-copy" onclick="copyCode(this)">Copy</button>
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
       </div>
-      <pre><code>./sample-agent/cleanup.sh</code></pre>
+      <h3>Domain Expert Advisor</h3>
+      <p>
+        A specialist agent with deep knowledge in a specific domain — like mortgage lending, insurance,
+        or investments. Combines customer data with policy lookups to provide personalized, compliant advice.
+      </p>
+      <ul class="uc-examples">
+        <li>Personalized mortgage rate quotes</li>
+        <li>Credit tier and eligibility checks</li>
+        <li>Policy-compliant recommendations</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">customer-tools</span>
+        <span class="uc-tech-tag">policy-tools</span>
+      </div>
     </div>
 
-    <div class="output-box">
-      <div class="output-header">
-        <div class="output-dots"><span></span><span></span><span></span></div>
-        <div class="output-title">Expected Output</div>
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
       </div>
-      <div class="output-body"><span style="color:#f87171">&#9656; Deleting Agent CRD...</span>
-agent.kagent.dev "account-summary-agent" deleted
-
-<span style="color:#f87171">&#9656; Deleting RemoteMCPServer CRD...</span>
-remotemcpserver.kagent.dev "account-summary-tools" deleted
-
-<span style="color:#f87171">&#9656; Deleting Deployment and Service...</span>
-deployment.apps "account-summary-tools" deleted
-service "account-summary-tools" deleted
-
-<span style="color:#f87171">&#9656; Removing from AgentRegistry...</span>
-  <span class="g">[OK]</span> Removed from AgentRegistry
-
-<span class="g">============================================================</span>
-<span class="g">  Account Summary Agent removed.</span>
-<span class="g">============================================================</span></div>
+      <h3>Intelligent Triage Router</h3>
+      <p>
+        A front-door agent that understands customer intent and routes to the correct specialist.
+        No tools needed — pure LLM routing logic. Keeps the user experience seamless while
+        directing to the right expert.
+      </p>
+      <ul class="uc-examples">
+        <li>Intent classification and routing</li>
+        <li>Graceful handoff between specialists</li>
+        <li>Ambiguity resolution with clarifying questions</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">No tools</span>
+        <span class="uc-tech-tag">Pure routing</span>
+      </div>
     </div>
 
-    <details>
-      <summary>What gets removed</summary>
-      <div class="details-body">
-        <ul>
-          <li><code>account-summary-agent</code> Agent CRD from <code>kagent</code> namespace</li>
-          <li><code>account-summary-tools</code> RemoteMCPServer CRD from <code>kagent</code> namespace</li>
-          <li><code>account-summary-tools</code> Deployment + Service from <code>bank-wiki</code> namespace</li>
-          <li>Agent and skill entries from AgentRegistry catalog</li>
-        </ul>
-        <p>The Docker image stays cached locally. The 7 original agents and 3 MCP servers are not affected.</p>
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
       </div>
-    </details>
+      <h3>Compliance & Audit Agent</h3>
+      <p>
+        An internal-only agent for policy audits, AML/KYC reviews, and regulatory compliance.
+        Has full access to customer data, transactions, and policies — restricted to
+        authorized compliance personnel only.
+      </p>
+      <ul class="uc-examples">
+        <li>AML red flag scanning</li>
+        <li>Customer risk profile audits</li>
+        <li>Rate fairness and policy compliance checks</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">All MCP tools</span>
+        <span class="uc-tech-tag">Internal only</span>
+      </div>
+    </div>
 
-    <!-- Done -->
-    <div class="done-banner">
-      <div style="font-size: 3rem;">&#127881;</div>
-      <h2>That's it.</h2>
-      <p style="color: var(--text-muted); max-width: 480px; margin: 0 auto;">
-        You created a custom AI agent, connected it to real data via MCP, deployed it to Kubernetes,
-        and tested it live &mdash; then cleaned up with a single command.
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
+      </div>
+      <h3>Infrastructure Ops Agent</h3>
+      <p>
+        A DevOps agent with live Kubernetes cluster access. Can get resources, describe pods,
+        check logs, apply manifests, and diagnose connectivity issues — all through natural language.
+      </p>
+      <ul class="uc-examples">
+        <li>Cluster health checks and pod diagnostics</li>
+        <li>Service connectivity troubleshooting</li>
+        <li>Resource management and manifest application</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">18 K8s tools</span>
+        <span class="uc-tech-tag">Live cluster</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
+      </div>
+      <h3>Operations Monitor</h3>
+      <p>
+        Real-time visibility into application health and datacenter status. Monitors uptime,
+        latency, error rates, and load across all systems and regions. Identifies correlations
+        between app issues and infrastructure problems.
+      </p>
+      <ul class="uc-examples">
+        <li>Application health and performance metrics</li>
+        <li>Datacenter status across all regions</li>
+        <li>System-wide overview reports</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">status-tools</span>
+        <span class="uc-tech-tag">5 monitoring tools</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-agent">Agent</span>
+      </div>
+      <h3>Incident Manager</h3>
+      <p>
+        Tracks active incidents by severity (P1/P2/P3), manages IT tickets, and coordinates
+        incident response. Highlights SLA status and escalation needs across all banking systems.
+      </p>
+      <ul class="uc-examples">
+        <li>Active incident tracking and search</li>
+        <li>IT ticket management and status</li>
+        <li>SLA compliance monitoring</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">incident-tools</span>
+        <span class="uc-tech-tag">5 ticketing tools</span>
+      </div>
+    </div>
+
+    <!-- Multi-Agent Systems -->
+    <div class="uc-card" data-category="multi-agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-multi">Multi-Agent</span>
+      </div>
+      <h3>Operations Center</h3>
+      <p>
+        A coordinator agent that delegates to three specialist sub-agents — Operations Monitor,
+        Incident Manager, and IT Support — to provide a unified operations view. Correlates
+        system health, incidents, and tickets to surface connections that individual agents miss.
+      </p>
+      <ul class="uc-examples">
+        <li>Unified status combining health + incidents + tickets</li>
+        <li>Cross-system issue correlation</li>
+        <li>Executive operations briefings</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">3 sub-agents</span>
+        <span class="uc-tech-tag">type: Agent</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="multi-agent">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-multi">Multi-Agent</span>
+      </div>
+      <h3>Infrastructure Support</h3>
+      <p>
+        A multi-domain coordinator that sees across Kubernetes, Helm, and IT systems.
+        When an issue spans layers — like an agent failing because of a misconfigured
+        Helm value affecting a K8s pod — this agent connects the dots.
+      </p>
+      <ul class="uc-examples">
+        <li>Cross-layer diagnosis (K8s + Helm + IT)</li>
+        <li>Platform upgrade coordination</li>
+        <li>Full-stack health assessments</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">GPT-4o</span>
+        <span class="uc-tech-tag">All bank tools</span>
+        <span class="uc-tech-tag">Multi-domain</span>
+      </div>
+    </div>
+
+    <!-- MCP Server Use Cases -->
+    <div class="uc-card" data-category="mcp">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-mcp">MCP Server</span>
+      </div>
+      <h3>Data Retrieval Server</h3>
+      <p>
+        An MCP server that wraps an existing data source (database, API, file system) and
+        exposes structured lookup, search, and detail retrieval tools. Agents call these tools
+        via the Streamable HTTP MCP protocol.
+      </p>
+      <ul class="uc-examples">
+        <li>Customer profile lookup and search</li>
+        <li>Account balance and transaction history</li>
+        <li>Product catalog queries</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">Go</span>
+        <span class="uc-tech-tag">MCP SDK</span>
+        <span class="uc-tech-tag">STREAMABLE_HTTP</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="mcp">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-mcp">MCP Server</span>
+      </div>
+      <h3>Policy & Rules Engine</h3>
+      <p>
+        An MCP server that encodes business rules, compliance policies, and rate tables.
+        Agents query it to make policy-compliant decisions — like checking lending eligibility
+        or applying the correct interest rate for a credit tier.
+      </p>
+      <ul class="uc-examples">
+        <li>Lending policy and eligibility rules</li>
+        <li>Rate tables by credit tier</li>
+        <li>KYC/AML compliance requirements</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">Go</span>
+        <span class="uc-tech-tag">MCP SDK</span>
+        <span class="uc-tech-tag">Rule evaluation</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="mcp">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-mcp">MCP Server</span>
+      </div>
+      <h3>Monitoring & Status Server</h3>
+      <p>
+        An MCP server that provides real-time system monitoring data — application health,
+        infrastructure status, performance metrics. Agents use it to give operations teams
+        instant visibility without dashboards.
+      </p>
+      <ul class="uc-examples">
+        <li>Application uptime and error rates</li>
+        <li>Datacenter health across regions</li>
+        <li>System-wide status overviews</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">Go</span>
+        <span class="uc-tech-tag">MCP SDK</span>
+        <span class="uc-tech-tag">Real-time metrics</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="mcp">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-mcp">MCP Server</span>
+      </div>
+      <h3>Incident & Ticketing Server</h3>
+      <p>
+        An MCP server that integrates with incident management and IT ticketing systems.
+        Provides tools to list, search, and retrieve incident details and ticket status —
+        enabling agents to coordinate incident response.
+      </p>
+      <ul class="uc-examples">
+        <li>Incident tracking by severity (P1/P2/P3)</li>
+        <li>IT ticket search and status</li>
+        <li>Cross-reference incidents with tickets</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">Go</span>
+        <span class="uc-tech-tag">MCP SDK</span>
+        <span class="uc-tech-tag">ITSM integration</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="mcp">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-mcp">MCP Server</span>
+      </div>
+      <h3>Kubernetes Tool Server</h3>
+      <p>
+        A built-in kagent MCP server providing 18 Kubernetes operations tools. Agents can
+        get resources, describe pods, check logs, apply manifests, and manage cluster state —
+        all through standard MCP protocol.
+      </p>
+      <ul class="uc-examples">
+        <li>Pod and service inspection</li>
+        <li>Log retrieval and event monitoring</li>
+        <li>Resource creation and patching</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">Built-in</span>
+        <span class="uc-tech-tag">kagent-tools</span>
+        <span class="uc-tech-tag">18 tools</span>
+      </div>
+    </div>
+
+    <!-- Skill Use Cases -->
+    <div class="uc-card" data-category="skill">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-skill">Skill</span>
+      </div>
+      <h3>Customer Lookup</h3>
+      <p>
+        A registered skill that enables agents to look up customer profiles by name or ID
+        and search across the customer database. Published in AgentRegistry for discovery
+        and reuse across multiple agents.
+      </p>
+      <ul class="uc-examples">
+        <li>Profile retrieval by name or ID</li>
+        <li>Customer search with filters</li>
+        <li>Account balance summaries</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">AgentRegistry</span>
+        <span class="uc-tech-tag">Reusable</span>
+        <span class="uc-tech-tag">Banking</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="skill">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-skill">Skill</span>
+      </div>
+      <h3>Transaction Analysis</h3>
+      <p>
+        A skill for analyzing transaction history, searching for suspicious patterns,
+        and reviewing account details. Used by both customer-facing and compliance agents
+        with different access levels.
+      </p>
+      <ul class="uc-examples">
+        <li>Transaction history and search</li>
+        <li>Suspicious pattern detection</li>
+        <li>Account detail summaries</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">AgentRegistry</span>
+        <span class="uc-tech-tag">Multi-agent</span>
+        <span class="uc-tech-tag">Banking</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="skill">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-skill">Skill</span>
+      </div>
+      <h3>Kubernetes Operations</h3>
+      <p>
+        A skill for cluster health monitoring, pod troubleshooting, and service connectivity
+        diagnostics. Registered in AgentRegistry so infrastructure agents can discover and
+        use K8s capabilities.
+      </p>
+      <ul class="uc-examples">
+        <li>Cluster diagnostics and health checks</li>
+        <li>Pod and service troubleshooting</li>
+        <li>Resource management operations</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">AgentRegistry</span>
+        <span class="uc-tech-tag">Infrastructure</span>
+        <span class="uc-tech-tag">18 tools</span>
+      </div>
+    </div>
+
+    <div class="uc-card" data-category="skill">
+      <div class="uc-badges">
+        <span class="uc-badge uc-badge-skill">Skill</span>
+      </div>
+      <h3>Incident Response</h3>
+      <p>
+        A skill for tracking incidents, managing IT tickets, and searching across the incident
+        database. Enables agents to participate in incident response workflows and SLA tracking.
+      </p>
+      <ul class="uc-examples">
+        <li>Incident lookup by ID or severity</li>
+        <li>Ticket status and search</li>
+        <li>SLA compliance checking</li>
+      </ul>
+      <div class="uc-tech">
+        <span class="uc-tech-tag">AgentRegistry</span>
+        <span class="uc-tech-tag">Operations</span>
+        <span class="uc-tech-tag">ITSM</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- How to Build section -->
+  <div class="uc-section">
+    <h2>How It Works</h2>
+    <p>Every component follows the same pattern: define, deploy, connect.</p>
+  </div>
+
+  <div class="cards" style="margin-bottom: 48px;">
+    <div class="card">
+      <div class="card-icon" style="font-size: 1.5rem;">1</div>
+      <h3>Define</h3>
+      <p>
+        Write a Kubernetes CRD manifest for your agent, MCP server, or model config. Agents get
+        a system prompt and tool references. MCP servers get a URL and protocol. Skills get registered
+        in AgentRegistry.
       </p>
     </div>
-
-    <div class="step-nav">
-      <button class="btn-nav btn-prev" onclick="prevStep()">&#8592; Back</button>
-      <button class="btn-nav btn-next complete" onclick="markDone()">&#10003; Done</button>
+    <div class="card">
+      <div class="card-icon" style="font-size: 1.5rem;">2</div>
+      <h3>Deploy</h3>
+      <p>
+        Apply the manifests with <code>kubectl apply</code>. MCP tool servers run as standard
+        Kubernetes Deployments. Agent CRDs are reconciled by the kagent controller. KMCP handles
+        the MCP protocol routing.
+      </p>
     </div>
+    <div class="card">
+      <div class="card-icon" style="font-size: 1.5rem;">3</div>
+      <h3>Connect</h3>
+      <p>
+        Agents discover tools through RemoteMCPServer CRDs. Multi-agent systems reference other
+        agents as tools using <code>type: Agent</code>. The Management UI provides a chat
+        interface for testing.
+      </p>
+    </div>
+  </div>
+
+  <!-- Key Patterns -->
+  <div class="uc-section">
+    <h2>Key Patterns</h2>
+    <p>Architectural patterns demonstrated in this demo.</p>
+  </div>
+
+  <div class="table-wrapper" style="margin-bottom: 48px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Pattern</th>
+          <th>Example</th>
+          <th>When to Use</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Triage + Specialists</strong></td>
+          <td>Triage Agent routes to Customer Service, Mortgage, Compliance</td>
+          <td>Multiple domains, single entry point, clean user experience</td>
+        </tr>
+        <tr>
+          <td><strong>Multi-Agent Coordinator</strong></td>
+          <td>Operations Center delegates to Ops Monitor + Incident Manager + IT Support</td>
+          <td>Cross-domain correlation, unified reporting, issue investigation</td>
+        </tr>
+        <tr>
+          <td><strong>Tool-Per-Domain</strong></td>
+          <td>Separate MCP servers for customers, policies, transactions, status, incidents</td>
+          <td>Clean separation of concerns, independent scaling, fine-grained access control</td>
+        </tr>
+        <tr>
+          <td><strong>Model Tiering</strong></td>
+          <td>GPT-4o for complex reasoning, GPT-4o Mini for high-volume customer interactions</td>
+          <td>Cost optimization — use the cheapest model that can handle each task</td>
+        </tr>
+        <tr>
+          <td><strong>Internal vs External</strong></td>
+          <td>Compliance Agent is internal-only, Customer Service is customer-facing</td>
+          <td>Different access levels, data sensitivity, regulatory requirements</td>
+        </tr>
+        <tr>
+          <td><strong>Live Infrastructure Access</strong></td>
+          <td>K8s Agent with 18 real cluster tools via kagent-tool-server</td>
+          <td>Operational agents that need to inspect or modify running systems</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
 </div>
@@ -475,48 +700,26 @@ service "account-summary-tools" deleted
       <div class="footer-version-item"><div class="version-dot"></div>kagent Enterprise v0.3.14</div>
       <div class="footer-version-item"><div class="version-dot"></div>Management UI v0.3.14</div>
       <div class="footer-version-item"><div class="version-dot"></div>AgentRegistry OSS v0.3.3</div>
-      <div class="footer-version-item"><div class="version-dot"></div>Go MCP SDK v1.4.0</div>
+      <div class="footer-version-item"><div class="version-dot"></div>MCP Go SDK</div>
     </div>
   </div>
 </footer>
 
 <script>
-let cur = 0;
-const total = 3;
-const done = new Set();
-
-function update() {
-  document.querySelectorAll('.stepper-step').forEach((el, i) => {
-    el.classList.remove('active', 'done');
-    if (i === cur) el.classList.add('active');
-    else if (done.has(i)) el.classList.add('done');
+function filterCards(category) {
+  document.querySelectorAll('.category-tab').forEach(function(tab) {
+    tab.classList.remove('active');
   });
-  const bar = document.getElementById('stepper-progress');
-  const w = document.querySelector('.stepper').offsetWidth * 0.5;
-  bar.style.width = (cur / (total - 1) * w) + 'px';
-  document.querySelectorAll('.step-panel').forEach((el, i) => {
-    el.classList.toggle('active', i === cur);
-  });
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
+  event.target.classList.add('active');
 
-function goToStep(s) {
-  if (s >= 0 && s < total) { if (cur < s) done.add(cur); cur = s; update(); }
-}
-function nextStep() { done.add(cur); if (cur < total - 1) { cur++; update(); } }
-function prevStep() { if (cur > 0) { cur--; update(); } }
-function markDone() { for (let i = 0; i < total; i++) done.add(i); update(); }
-
-function copyCode(btn) {
-  const code = btn.closest('.code-block').querySelector('code').textContent;
-  navigator.clipboard.writeText(code).then(() => {
-    btn.textContent = 'Copied!';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  document.querySelectorAll('.uc-card').forEach(function(card) {
+    if (category === 'all' || card.dataset.category === category) {
+      card.classList.remove('hidden');
+    } else {
+      card.classList.add('hidden');
+    }
   });
 }
-
-update();
 </script>
 
 </body>

@@ -41,6 +41,38 @@ spec:
       - Prioritize findings by risk level
       - For AML flags, reference specific transaction amounts and dates
       - If no issues found, explicitly state the account is compliant
+    a2aConfig:
+      skills:
+        - id: compliance-review
+          name: Compliance Review
+          description: Full compliance review of a customer account against bank policies.
+          tags:
+            - compliance
+            - audit
+          examples:
+            - "Review CUST-00003 for compliance issues"
+            - "Run a full audit on CUST-00042"
+            - "Which customers have active compliance flags?"
+        - id: aml-screening
+          name: AML Screening
+          description: Check for anti-money laundering red flags in transactions.
+          tags:
+            - compliance
+            - aml
+          examples:
+            - "Check AML red flags in the last 90 days"
+            - "Audit customers with international wire transfers"
+            - "Flag transactions over $10,000 this quarter"
+        - id: rate-audit
+          name: Rate Audit
+          description: Verify customers are receiving the correct rates for their credit tier.
+          tags:
+            - compliance
+            - rates
+          examples:
+            - "Is CUST-00042 getting the correct rate for their credit tier?"
+            - "Check all Premium tier customers for rate mismatches"
+            - "Verify mortgage rates against the current rate schedule"
     tools:
     - type: McpServer
       mcpServer:

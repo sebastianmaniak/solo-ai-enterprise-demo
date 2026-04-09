@@ -28,6 +28,38 @@ spec:
       - If a customer reports suspicious activity, document it and escalate to your supervisor
       - Reference specific account numbers and transaction details when discussing accounts
       - Never share information about other customers
+    a2aConfig:
+      skills:
+        - id: balance-check
+          name: Balance Check
+          description: Look up account balances after verifying customer identity.
+          tags:
+            - banking
+            - accounts
+          examples:
+            - "I'm John Smith, can you check my balance?"
+            - "My Customer ID is CUST-00042"
+            - "What's the balance on my checking account?"
+        - id: transaction-review
+          name: Transaction Review
+          description: Search and review recent transaction history.
+          tags:
+            - banking
+            - transactions
+          examples:
+            - "Show me transactions over $500 this month"
+            - "When was my last deposit?"
+            - "List all my pending transactions"
+        - id: dispute-filing
+          name: Dispute Filing
+          description: Help customers investigate and report suspicious charges.
+          tags:
+            - banking
+            - disputes
+          examples:
+            - "I see a charge I don't recognize"
+            - "There's a duplicate charge on my account"
+            - "I want to dispute a transaction from last week"
     tools:
     - type: McpServer
       mcpServer:

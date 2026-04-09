@@ -7,7 +7,7 @@ spec:
   description: "Solo Bank — Kubernetes Operations Agent. Monitors cluster health, troubleshoots pod issues, and provides infrastructure guidance."
   type: Declarative
   declarative:
-    modelConfig: anthropic-claude-sonnet
+    modelConfig: openai-gpt4o
     systemMessage: |
       You are a Kubernetes operations specialist at Solo Bank. You help the infrastructure team monitor cluster health, troubleshoot issues, and manage deployments.
 
@@ -29,17 +29,92 @@ spec:
       - Gateway API CRDs installed for KMCP support
       - NodePorts: 30121 (AgentRegistry), 30400 (Wiki), 30500 (Docs)
 
+      Available Tools:
+      You have access to Kubernetes tools via the kagent tool server:
+      - GetResources: Retrieve info about K8s resources (prefer "wide" output)
+      - DescribeResource: Get detailed info about a specific resource
+      - GetEvents: View cluster events to identify issues
+      - GetPodLogs: Retrieve logs from pods for troubleshooting
+      - GetResourceYAML: Get YAML representation of a resource
+      - GetAvailableAPIResources: View supported API resources
+      - GetClusterConfiguration: Retrieve cluster config
+      - CheckServiceConnectivity: Verify connectivity to a service
+      - ExecuteCommand: Run a command inside a pod (use cautiously)
+      - ApplyManifest: Apply a YAML resource to the cluster
+      - PatchResource: Make partial updates to a resource
+      - DeleteResource: Remove a resource (use with caution)
+      - LabelResource / RemoveLabel: Manage resource labels
+      - AnnotateResource / RemoveAnnotation: Manage resource annotations
+      - CreateResource / CreateResourceFromUrl: Create resources
+
       How you help:
       - Explain the cluster architecture and service dependencies
-      - Troubleshoot pod/service connectivity issues
+      - Troubleshoot pod/service connectivity issues using your tools
+      - Check pod health, logs, and events in real-time
       - Advise on scaling, resource limits, and health checks
       - Explain how the MCP tool servers connect to the wiki
       - Help with namespace isolation and RBAC questions
       - Guide on monitoring and observability setup
 
       Guidelines:
+      - Use your Kubernetes tools to gather real data before answering
       - Always reference specific service names and namespaces
       - Explain Kubernetes concepts when asked
-      - Suggest kubectl commands for diagnostics
+      - Start with least intrusive operations (get/describe) before modifications
       - Be aware this is a demo/dev cluster, not production
-    tools: []
+    a2aConfig:
+      skills:
+        - id: cluster-diagnostics
+          name: Cluster Diagnostics
+          description: The ability to analyze and diagnose Kubernetes cluster issues.
+          tags:
+            - cluster
+            - diagnostics
+          examples:
+            - "What is the status of my cluster?"
+            - "How can I troubleshoot a failing pod?"
+            - "What are the resource limits for my nodes?"
+        - id: resource-management
+          name: Resource Management
+          description: The ability to manage and optimize Kubernetes resources.
+          tags:
+            - resource
+            - management
+          examples:
+            - "What services are in the bank-wiki namespace?"
+            - "Show me all pods in the kagent namespace"
+            - "Get the logs from the bank-customer-tools pod"
+        - id: security-audit
+          name: Security Audit
+          description: The ability to audit and enhance Kubernetes security.
+          tags:
+            - security
+            - audit
+          examples:
+            - "Check for RBAC misconfigurations."
+            - "What are the NodePort mappings?"
+            - "Explain how KMCP connects agents to tools"
+    tools:
+    - type: McpServer
+      mcpServer:
+        name: kagent-tool-server
+        kind: RemoteMCPServer
+        toolNames:
+        - k8s_get_resources
+        - k8s_describe_resource
+        - k8s_get_events
+        - k8s_get_pod_logs
+        - k8s_get_resource_yaml
+        - k8s_get_available_api_resources
+        - k8s_get_cluster_configuration
+        - k8s_check_service_connectivity
+        - k8s_execute_command
+        - k8s_apply_manifest
+        - k8s_patch_resource
+        - k8s_delete_resource
+        - k8s_create_resource
+        - k8s_create_resource_from_url
+        - k8s_label_resource
+        - k8s_remove_label
+        - k8s_annotate_resource
+        - k8s_remove_annotation

@@ -34,7 +34,7 @@
   </p>
   <div class="hero-actions">
     <a href="guide.html" class="btn btn-primary">Read the Usage Guide</a>
-    <a href="tutorial.html" class="btn btn-outline">Build Your Own Agent</a>
+    <a href="tutorial.html" class="btn btn-outline">What Can You Build?</a>
   </div>
 </section>
 
@@ -51,23 +51,22 @@
         <div class="card-icon">📖</div>
         <h3>Usage Guide</h3>
         <p>
-          Learn how to interact with the eight banking agents — Triage, Customer Service,
-          Mortgage Advisor, Compliance, Kubernetes, Helm, IT Support, and Infrastructure Support.
-          Includes example prompts, identity verification flows, and how to view OTEL traces.
+          Learn how to interact with the eleven banking agents — Triage, Customer Service,
+          Mortgage Advisor, Compliance, Kubernetes, Helm, IT Support, Infrastructure Support,
+          Operations Monitor, Incident Manager, and Operations Center. Includes example prompts and OTEL traces.
         </p>
         <a href="guide.html" class="card-link">Read the guide</a>
       </div>
 
-      <!-- Tutorial -->
+      <!-- Use Cases -->
       <div class="card">
         <div class="card-icon">🛠️</div>
-        <h3>Build Your Own Agent</h3>
+        <h3>What Can You Build?</h3>
         <p>
-          Step-by-step tutorial to create a custom MCP tool server in Go, register it in
-          AgentRegistry, wire it to a kagent Agent CRD via KMCP, and test it live in the
-          cluster — all in under 30 minutes.
+          Explore the types of AI agents, skills, and MCP tool servers you can build with
+          the Solo.io platform — from customer-facing chatbots to multi-agent operations centers.
         </p>
-        <a href="tutorial.html" class="card-link">Start the tutorial</a>
+        <a href="tutorial.html" class="card-link">Explore use cases</a>
       </div>
 
       <!-- Architecture -->
@@ -88,7 +87,7 @@
   <!-- What's in the demo -->
   <section class="section" style="padding-top: 0;">
     <h2 class="section-title">What's in the Demo</h2>
-    <p class="section-subtitle">Eight specialist agents (including a multi-agent infrastructure coordinator), three MCP tool servers, and a full observability pipeline.</p>
+    <p class="section-subtitle">Eleven specialist agents (including two multi-agent coordinators), five MCP tool servers, and a full observability pipeline.</p>
 
     <div class="cards">
       <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-triage-agent" data-model="GPT-4o" data-tools="None — pure routing" data-prompts="I want to check my account balance|What mortgage rate can I get?|I see a suspicious charge on my account|I need help with an IT issue">
@@ -133,13 +132,13 @@
         <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-k8s-agent" data-model="Claude Sonnet" data-tools="None — knowledge-based" data-prompts="What services are in the bank-wiki namespace?|How do I troubleshoot a failing MCP connection?|What are the NodePort mappings?|Explain how KMCP connects agents to tools">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-k8s-agent" data-model="GPT-4o" data-tools="kagent k8s tools (18 tools)" data-prompts="What services are in the bank-wiki namespace?|How do I troubleshoot a failing MCP connection?|What are the NodePort mappings?|Explain how KMCP connects agents to tools">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <h3>Kubernetes Agent</h3>
         <p>
-          Infrastructure operations specialist. Monitors cluster health, troubleshoots pod
-          issues, and provides guidance on service connectivity. Internal/DevOps use only.
-          Powered by <strong>Claude Sonnet</strong>.
+          Infrastructure operations specialist with <strong>live cluster access</strong> via 18 Kubernetes
+          tools — get resources, describe pods, check logs, apply manifests, and more.
+          Powered by <strong>GPT-4o</strong>.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>
@@ -166,14 +165,46 @@
         <span class="card-link">Chat with this agent</span>
       </div>
 
-      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-infra-support-agent" data-model="Claude Sonnet" data-tools="customer-tools, policy-tools, transaction-tools" data-prompts="An agent can't reach its MCP tools — diagnose the full chain|We need to upgrade kagent — what's the full checklist?|The Management UI is down — walk me through the investigation|Run a health check across all infrastructure layers">
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-ops-agent" data-model="GPT-4o" data-tools="bank-status-tools" data-prompts="What's the status of all banking applications?|Is the mortgage processing system healthy?|What's the status of our datacenters?|Give me a full system health report">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Operations Monitor Agent</h3>
+        <p>
+          Real-time monitoring of all banking applications and datacenter health across 4 regions.
+          Powered by <strong>GPT-4o</strong> with live status and metrics tools.
+        </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-incident-agent" data-model="GPT-4o" data-tools="bank-incident-tools" data-prompts="What are the current open incidents?|Are there any P1 incidents right now?|Show me all open IT tickets|Search for anything related to ATM issues">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Incident Manager Agent</h3>
+        <p>
+          Tracks active incidents (P1/P2/P3), manages IT tickets, and coordinates incident response
+          across all banking systems. Powered by <strong>GPT-4o</strong>.
+        </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-infra-support-agent" data-model="GPT-4o" data-tools="customer-tools, policy-tools, transaction-tools" data-prompts="An agent can't reach its MCP tools — diagnose the full chain|We need to upgrade kagent — what's the full checklist?|The Management UI is down — walk me through the investigation|Run a health check across all infrastructure layers">
         <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
         <span class="badge" style="margin-bottom: 14px; background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 100px;">Multi-Agent</span>
         <h3>Infrastructure Support Agent</h3>
         <p>
-          Multi-domain coordinator powered by <strong>Claude Sonnet</strong>. Diagnoses issues
+          Multi-domain coordinator powered by <strong>GPT-4o</strong>. Diagnoses issues
           across Kubernetes, Helm, and IT systems — connecting dots that single-domain agents miss.
           Has full tool access for end-to-end investigation.
+        </p>
+        <span class="card-link">Chat with this agent</span>
+      </div>
+
+      <div class="card agent-card" onclick="openAgent(this)" data-agent="bank-ops-center-agent" data-model="GPT-4o" data-tools="Delegates to: ops-agent, incident-agent, it-agent" data-prompts="Give me a full operations status report|Are the mortgage processing issues related to any open incidents?|Should we escalate the ATM outage?|Executive briefing — what do I need to know right now?">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <span class="badge" style="margin-bottom: 14px; background: #fef3c7; color: #92400e; font-size: 0.65rem; font-weight: 600; padding: 2px 7px; border-radius: 100px;">Multi-Agent</span>
+        <h3>Operations Center Agent</h3>
+        <p>
+          Multi-agent coordinator powered by <strong>GPT-4o</strong>. Delegates to Operations Monitor,
+          Incident Manager, and IT Support agents to provide a unified operations view with
+          cross-system correlation.
         </p>
         <span class="card-link">Chat with this agent</span>
       </div>
@@ -193,6 +224,15 @@
         <p>
           Separate MCP servers for bank policy lookups (lending, KYC/AML, rate tables) and
           transaction history/account analytics — ports 8082 and 8083 respectively.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-tool" style="margin-bottom: 14px;">MCP Server</span>
+        <h3>Status &amp; Incident Tools</h3>
+        <p>
+          Application status monitoring with datacenter health (port 8085) and incident management
+          with IT ticketing (port 8086) — both over <code>STREAMABLE_HTTP</code> MCP.
         </p>
       </div>
     </div>

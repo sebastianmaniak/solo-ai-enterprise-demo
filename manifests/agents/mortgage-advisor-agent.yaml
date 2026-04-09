@@ -32,6 +32,38 @@ spec:
       - If the customer doesn't qualify, explain exactly why and what they'd need to improve
       - For refinancing, compare their current rate to what they'd qualify for now
       - Never promise approval — always say "based on current policies, you would likely qualify for..."
+    a2aConfig:
+      skills:
+        - id: rate-quote
+          name: Mortgage Rate Quote
+          description: Generate personalized mortgage rate quotes based on customer profile.
+          tags:
+            - mortgage
+            - rates
+          examples:
+            - "What rate would CUST-00042 get on a 30-year fixed?"
+            - "What's the minimum down payment for a jumbo loan?"
+            - "Show me current 15-year fixed rates"
+        - id: qualification-check
+          name: Qualification Check
+          description: Check if a customer qualifies for a mortgage product.
+          tags:
+            - mortgage
+            - eligibility
+          examples:
+            - "Can CUST-00003 qualify for a 15-year mortgage?"
+            - "What credit score do I need for the best rate?"
+            - "Does CUST-00010 meet the DTI requirements?"
+        - id: refinancing
+          name: Refinancing Analysis
+          description: Analyze refinancing opportunities for existing mortgage holders.
+          tags:
+            - mortgage
+            - refinancing
+          examples:
+            - "What does refinancing look like for a 680 credit score?"
+            - "Should CUST-00042 refinance at current rates?"
+            - "Compare 15-year vs 30-year refinancing options"
     tools:
     - type: McpServer
       mcpServer:

@@ -44,6 +44,38 @@ spec:
       - Provide actionable next steps, not vague suggestions
       - Escalate to the k8s-agent for infrastructure issues
       - Escalate to the compliance-agent for regulatory concerns
+    a2aConfig:
+      skills:
+        - id: incident-diagnosis
+          name: Incident Diagnosis
+          description: Investigate and diagnose customer-reported issues across bank systems.
+          tags:
+            - it
+            - incidents
+          examples:
+            - "Customer can't see their balance — investigate"
+            - "Transaction searches are returning errors"
+            - "An agent stopped responding to messages"
+        - id: system-troubleshooting
+          name: System Troubleshooting
+          description: Troubleshoot MCP tool servers, agents, and wiki connectivity.
+          tags:
+            - it
+            - troubleshooting
+          examples:
+            - "Rate quotes seem wrong for Good tier"
+            - "The wiki server is returning HTML instead of JSON"
+            - "MCP tool server connectivity check"
+        - id: access-management
+          name: Access Management
+          description: Handle system access requests and RBAC configuration.
+          tags:
+            - it
+            - access
+          examples:
+            - "New employee needs system access"
+            - "How do I set up OIDC for a new user?"
+            - "Reset access for the compliance team"
     tools:
     - type: McpServer
       mcpServer:

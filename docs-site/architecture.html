@@ -17,7 +17,7 @@
     </a>
     <ul class="nav-links">
       <li><a href="guide.html">Usage Guide</a></li>
-      <li><a href="tutorial.html">Tutorial</a></li>
+      <li><a href="tutorial.html">Use Cases</a></li>
       <li><a href="architecture.html" class="active">Architecture</a></li>
     </ul>
   </div>
@@ -255,16 +255,16 @@ External Access (all NodePort — no port-forward needed):
             <td>Single-node; ports 30121, 30400, 30500 mapped</td>
           </tr>
           <tr>
-            <td><strong>Claude Sonnet</strong></td>
-            <td>claude-sonnet-4 (latest)</td>
-            <td>Anthropic API</td>
-            <td>Used by Triage, Mortgage Advisor, Compliance agents</td>
+            <td><strong>GPT-4o</strong></td>
+            <td>gpt-4o (latest)</td>
+            <td>OpenAI API</td>
+            <td>Used by Triage, Mortgage Advisor, Compliance, K8s, IT, Infra Support agents</td>
           </tr>
           <tr>
             <td><strong>GPT-4o Mini</strong></td>
             <td>gpt-4o-mini (latest)</td>
             <td>OpenAI API</td>
-            <td>Used by Customer Service Agent</td>
+            <td>Used by Customer Service and Helm agents</td>
           </tr>
           <tr>
             <td><strong>nginx</strong></td>
@@ -479,8 +479,8 @@ External Access (all NodePort — no port-forward needed):
           </tr>
           <tr>
             <td><code>ModelConfig</code></td>
-            <td>Points to an LLM API (OpenAI, Anthropic) with API key secret reference</td>
-            <td><code>openai-gpt4o-mini</code>, <code>anthropic-claude-sonnet</code></td>
+            <td>Points to an LLM API (OpenAI) with API key secret reference</td>
+            <td><code>openai-gpt4o</code>, <code>openai-gpt4o-mini</code></td>
           </tr>
           <tr>
             <td><code>RemoteMCPServer</code></td>

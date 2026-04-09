@@ -130,8 +130,8 @@ curl -sf -X POST "${AR_URL}/v0/agents" \
   "image": "kagent-dev/kagent/app:0.8.0",
   "language": "python",
   "framework": "kagent",
-  "modelProvider": "Anthropic",
-  "modelName": "claude-sonnet-4-6",
+  "modelProvider": "OpenAI",
+  "modelName": "gpt-4o",
   "mcpServers": [],
   "skills": []
 }' > /dev/null
@@ -168,8 +168,8 @@ curl -sf -X POST "${AR_URL}/v0/agents" \
   "image": "kagent-dev/kagent/app:0.8.0",
   "language": "python",
   "framework": "kagent",
-  "modelProvider": "Anthropic",
-  "modelName": "claude-sonnet-4-6",
+  "modelProvider": "OpenAI",
+  "modelName": "gpt-4o",
   "mcpServers": [
     {"type": "streamable-http", "name": "bank-customer-tools", "registryServerName": "solo.io/bank-customer-tools"},
     {"type": "streamable-http", "name": "bank-policy-tools", "registryServerName": "solo.io/bank-policy-tools"}
@@ -190,8 +190,8 @@ curl -sf -X POST "${AR_URL}/v0/agents" \
   "image": "kagent-dev/kagent/app:0.8.0",
   "language": "python",
   "framework": "kagent",
-  "modelProvider": "Anthropic",
-  "modelName": "claude-sonnet-4-6",
+  "modelProvider": "OpenAI",
+  "modelName": "gpt-4o",
   "mcpServers": [
     {"type": "streamable-http", "name": "bank-customer-tools", "registryServerName": "solo.io/bank-customer-tools"},
     {"type": "streamable-http", "name": "bank-policy-tools", "registryServerName": "solo.io/bank-policy-tools"},
@@ -214,8 +214,8 @@ curl -sf -X POST "${AR_URL}/v0/agents" \
   "image": "kagent-dev/kagent/app:0.8.0",
   "language": "python",
   "framework": "kagent",
-  "modelProvider": "Anthropic",
-  "modelName": "claude-sonnet-4-6",
+  "modelProvider": "OpenAI",
+  "modelName": "gpt-4o",
   "mcpServers": [],
   "skills": [
     {"name": "k8s-operations", "registrySkillName": "k8s-operations"}
@@ -232,8 +232,8 @@ curl -sf -X POST "${AR_URL}/v0/agents" \
   "image": "kagent-dev/kagent/app:0.8.0",
   "language": "python",
   "framework": "kagent",
-  "modelProvider": "Anthropic",
-  "modelName": "claude-sonnet-4-6",
+  "modelProvider": "OpenAI",
+  "modelName": "gpt-4o",
   "mcpServers": [],
   "skills": [
     {"name": "helm-deployment", "registrySkillName": "helm-deployment"}
@@ -250,8 +250,8 @@ curl -sf -X POST "${AR_URL}/v0/agents" \
   "image": "kagent-dev/kagent/app:0.8.0",
   "language": "python",
   "framework": "kagent",
-  "modelProvider": "Anthropic",
-  "modelName": "claude-sonnet-4-6",
+  "modelProvider": "OpenAI",
+  "modelName": "gpt-4o",
   "mcpServers": [
     {"type": "streamable-http", "name": "bank-customer-tools", "registryServerName": "solo.io/bank-customer-tools"},
     {"type": "streamable-http", "name": "bank-transaction-tools", "registryServerName": "solo.io/bank-transaction-tools"},

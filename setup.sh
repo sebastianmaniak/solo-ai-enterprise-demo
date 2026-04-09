@@ -38,13 +38,20 @@ for tool in docker kind kubectl helm curl jq openssl; do
   echo -e "${GREEN}  [OK]${NC} ${tool}"
 done
 
-# AGENTGATEWAY_LICENSE_KEY is used for kagent Enterprise + Management UI licensing
-for var in OPENAI_API_KEY ANTHROPIC_API_KEY AGENTGATEWAY_LICENSE_KEY; do
+for var in OPENAI_API_KEY; do
   if [[ -z "${!var:-}" ]]; then
     fail "Required environment variable not set: ${var}"
   fi
   echo -e "${GREEN}  [OK]${NC} ${var}"
 done
+
+# AGENTGATEWAY_LICENSE_KEY is optional — used for kagent Enterprise licensing
+if [[ -n "${AGENTGATEWAY_LICENSE_KEY:-}" ]]; then
+  echo -e "${GREEN}  [OK]${NC} AGENTGATEWAY_LICENSE_KEY"
+else
+  AGENTGATEWAY_LICENSE_KEY=""
+  warn "AGENTGATEWAY_LICENSE_KEY not set — using empty value (trial mode)."
+fi
 
 # ---------------------------------------------------------------------------
 # Step 1: Create Kind cluster
@@ -155,6 +162,7 @@ helm upgrade --install kagent-enterprise \
   --set defaultModelConfig.model=gpt-4o-mini \
   --set controller.enabled=true \
   --set kmcp.enabled=true \
+  --set kagent-tools.enabled=true \
   --set oidc.skipOBO=true \
   --set otel.tracing.enabled=true \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
@@ -186,11 +194,6 @@ kubectl create secret generic openai-secret \
   --from-literal=Authorization="${OPENAI_API_KEY}" \
   --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl create secret generic anthropic-secret \
-  --namespace kagent \
-  --from-literal=Authorization="${ANTHROPIC_API_KEY}" \
-  --dry-run=client -o yaml | kubectl apply -f -
-
 echo -e "${GREEN}LLM API key secrets created.${NC}"
 
 # ---------------------------------------------------------------------------
@@ -216,6 +219,16 @@ docker build -t bank-transaction-tools:latest \
   -f "${SCRIPT_DIR}/mcp-tools/transaction-tools/Dockerfile" \
   "${SCRIPT_DIR}/mcp-tools/"
 
+echo "Building bank-status-tools..."
+docker build -t bank-status-tools:latest \
+  -f "${SCRIPT_DIR}/mcp-tools/status-tools/Dockerfile" \
+  "${SCRIPT_DIR}/mcp-tools/"
+
+echo "Building bank-incident-tools..."
+docker build -t bank-incident-tools:latest \
+  -f "${SCRIPT_DIR}/mcp-tools/incident-tools/Dockerfile" \
+  "${SCRIPT_DIR}/mcp-tools/"
+
 if [ -d "${SCRIPT_DIR}/docs-site" ]; then
   echo "Building bank-docs-site..."
   docker build -t bank-docs-site:latest "${SCRIPT_DIR}/docs-site/"
@@ -226,6 +239,8 @@ kind load docker-image bank-wiki-server:latest --name solo-bank-demo
 kind load docker-image bank-customer-tools:latest --name solo-bank-demo
 kind load docker-image bank-policy-tools:latest --name solo-bank-demo
 kind load docker-image bank-transaction-tools:latest --name solo-bank-demo
+kind load docker-image bank-status-tools:latest --name solo-bank-demo
+kind load docker-image bank-incident-tools:latest --name solo-bank-demo
 
 if [ -d "${SCRIPT_DIR}/docs-site" ]; then
   kind load docker-image bank-docs-site:latest --name solo-bank-demo
@@ -256,6 +271,14 @@ echo "Waiting for bank-transaction-tools pods..."
 kubectl wait --for=condition=Ready pod -l app=bank-transaction-tools \
   -n bank-wiki --timeout=120s
 
+echo "Waiting for bank-status-tools pods..."
+kubectl wait --for=condition=Ready pod -l app=bank-status-tools \
+  -n bank-wiki --timeout=120s
+
+echo "Waiting for bank-incident-tools pods..."
+kubectl wait --for=condition=Ready pod -l app=bank-incident-tools \
+  -n bank-wiki --timeout=120s
+
 echo -e "${GREEN}Bank wiki and tool servers deployed.${NC}"
 
 # ---------------------------------------------------------------------------
@@ -277,7 +300,7 @@ echo -e "${GREEN}MCP servers, model configs, and agents applied.${NC}"
 # ---------------------------------------------------------------------------
 banner "Step 12: Populate AgentRegistry catalog"
 
-AR_URL="http://agentregistry.agentregistry.svc.cluster.local:8080"
+AR_URL="http://localhost:8080"
 AR_POD=$(kubectl get pod -l app.kubernetes.io/name=agentregistry -n agentregistry \
   -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
 
@@ -296,7 +319,9 @@ if [[ -n "${AR_POD}" ]]; then
     for svr_data in \
       '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-customer-tools","title":"Solo Bank Customer Tools","description":"Customer data tools — lookup, search, account balances","version":"1.0.0"}' \
       '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-policy-tools","title":"Solo Bank Policy Tools","description":"Policy and rates tools — lending policies, rate tables, credit tiers","version":"1.0.0"}' \
-      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-transaction-tools","title":"Solo Bank Transaction Tools","description":"Transaction and account tools — history, details, search","version":"1.0.0"}'; do
+      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-transaction-tools","title":"Solo Bank Transaction Tools","description":"Transaction and account tools — history, details, search","version":"1.0.0"}' \
+      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-status-tools","title":"Solo Bank Status Tools","description":"Application status monitoring and datacenter health tools","version":"1.0.0"}' \
+      '{"$schema":"https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json","name":"io.modelcontextprotocol.anonymous/bank-incident-tools","title":"Solo Bank Incident Tools","description":"Incident management and IT ticketing tools","version":"1.0.0"}'; do
       kubectl exec "${AR_POD}" -n agentregistry -- \
         wget -qO- --post-data="${svr_data}" \
         --header="Content-Type: application/json" \
@@ -314,7 +339,12 @@ if [[ -n "${AR_POD}" ]]; then
       '{"name":"k8s-operations","title":"Kubernetes Operations","description":"Cluster health monitoring, pod troubleshooting, service connectivity diagnostics","version":"1.0.0","category":"infrastructure"}' \
       '{"name":"helm-deployment","title":"Helm Deployment Management","description":"Helm release management, upgrades, rollbacks, and chart configuration","version":"1.0.0","category":"infrastructure"}' \
       '{"name":"it-support","title":"IT Support","description":"Internal IT ticket handling, system troubleshooting, and cross-team coordination","version":"1.0.0","category":"operations"}' \
-      '{"name":"infra-support","title":"Infrastructure Support","description":"Multi-domain infrastructure coordination across Kubernetes, Helm, and IT systems","version":"1.0.0","category":"infrastructure"}'; do
+      '{"name":"infra-support","title":"Infrastructure Support","description":"Multi-domain infrastructure coordination across Kubernetes, Helm, and IT systems","version":"1.0.0","category":"infrastructure"}' \
+      '{"name":"app-monitoring","title":"Application Monitoring","description":"Monitor health and performance of core banking applications","version":"1.0.0","category":"operations"}' \
+      '{"name":"datacenter-health","title":"Datacenter Health","description":"Check status of all Solo Bank datacenters and infrastructure","version":"1.0.0","category":"operations"}' \
+      '{"name":"incident-tracking","title":"Incident Tracking","description":"Track and manage active incidents across all banking systems","version":"1.0.0","category":"operations"}' \
+      '{"name":"ticket-management","title":"Ticket Management","description":"Track IT tickets, access requests, and change management","version":"1.0.0","category":"operations"}' \
+      '{"name":"ops-center","title":"Operations Center","description":"Unified operations coordination across monitoring, incidents, and IT support","version":"1.0.0","category":"operations"}'; do
       kubectl exec "${AR_POD}" -n agentregistry -- \
         wget -qO- --post-data="${skill_data}" \
         --header="Content-Type: application/json" \
@@ -329,10 +359,13 @@ if [[ -n "${AR_POD}" ]]; then
       '{"name":"bank-customer-service-agent","title":"Solo Bank Customer Service Agent","description":"Handles account inquiries, balance checks, and transaction questions","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o-mini","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"transaction-analysis","registrySkillName":"transaction-analysis"}]}' \
       '{"name":"bank-mortgage-advisor-agent","title":"Solo Bank Mortgage Advisor Agent","description":"Provides personalized mortgage rate quotes, refinancing guidance, and lending requirements","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"mortgage-rate-quote","registrySkillName":"mortgage-rate-quote"}]}' \
       '{"name":"bank-compliance-agent","title":"Solo Bank Compliance Agent","description":"Internal compliance officer for policy audits, fraud review, and regulatory checks","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"policy-compliance-check","registrySkillName":"policy-compliance-check"},{"name":"transaction-analysis","registrySkillName":"transaction-analysis"}]}' \
-      '{"name":"bank-k8s-agent","title":"Solo Bank Kubernetes Agent","description":"Infrastructure operations specialist for cluster health monitoring and troubleshooting","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"k8s-operations","registrySkillName":"k8s-operations"}]}' \
+      '{"name":"bank-k8s-agent","title":"Solo Bank Kubernetes Agent","description":"Infrastructure operations specialist for cluster health monitoring and troubleshooting","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"k8s-operations","registrySkillName":"k8s-operations"}]}' \
       '{"name":"bank-helm-agent","title":"Solo Bank Helm Agent","description":"Helm deployment specialist for release management, upgrades, and configuration","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o-mini","skills":[{"name":"helm-deployment","registrySkillName":"helm-deployment"}]}' \
       '{"name":"bank-it-agent","title":"Solo Bank IT Support Agent","description":"IT support lead for ticket handling, system troubleshooting, and cross-team coordination","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"customer-lookup","registrySkillName":"customer-lookup"},{"name":"transaction-analysis","registrySkillName":"transaction-analysis"},{"name":"it-support","registrySkillName":"it-support"}]}' \
-      '{"name":"bank-infra-support-agent","title":"Solo Bank Infrastructure Support Agent","description":"Multi-domain coordinator for Kubernetes, Helm, and IT operations — diagnoses cross-layer issues","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"Anthropic","modelName":"claude-sonnet-4-6","skills":[{"name":"k8s-operations","registrySkillName":"k8s-operations"},{"name":"helm-deployment","registrySkillName":"helm-deployment"},{"name":"it-support","registrySkillName":"it-support"},{"name":"infra-support","registrySkillName":"infra-support"}]}'; do
+      '{"name":"bank-infra-support-agent","title":"Solo Bank Infrastructure Support Agent","description":"Multi-domain coordinator for Kubernetes, Helm, and IT operations — diagnoses cross-layer issues","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"k8s-operations","registrySkillName":"k8s-operations"},{"name":"helm-deployment","registrySkillName":"helm-deployment"},{"name":"it-support","registrySkillName":"it-support"},{"name":"infra-support","registrySkillName":"infra-support"}]}' \
+      '{"name":"bank-ops-agent","title":"Solo Bank Operations Monitor Agent","description":"Real-time monitoring of banking applications, datacenter health, and system-wide metrics","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"app-monitoring","registrySkillName":"app-monitoring"},{"name":"datacenter-health","registrySkillName":"datacenter-health"}]}' \
+      '{"name":"bank-incident-agent","title":"Solo Bank Incident Manager Agent","description":"Tracks incidents, manages IT tickets, and coordinates incident response across all banking systems","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"incident-tracking","registrySkillName":"incident-tracking"},{"name":"ticket-management","registrySkillName":"ticket-management"}]}' \
+      '{"name":"bank-ops-center-agent","title":"Solo Bank Operations Center Agent","description":"Multi-agent coordinator combining system monitoring, incident management, and IT support","version":"1.0.0","image":"kagent-dev/kagent/app:0.8.0","language":"python","framework":"kagent","modelProvider":"OpenAI","modelName":"gpt-4o","skills":[{"name":"ops-center","registrySkillName":"ops-center"},{"name":"app-monitoring","registrySkillName":"app-monitoring"},{"name":"incident-tracking","registrySkillName":"incident-tracking"}]}'; do
       kubectl exec "${AR_POD}" -n agentregistry -- \
         wget -qO- --post-data="${agent_data}" \
         --header="Content-Type: application/json" \

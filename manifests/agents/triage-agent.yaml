@@ -14,6 +14,9 @@ spec:
       Available specialists:
       - **Customer Service Agent**: Account inquiries, balance checks, transaction questions, general banking needs, dispute filing
       - **Mortgage Advisor Agent**: Mortgage rates, refinancing opportunities, home equity lines, lending qualification questions
+      - **Operations Monitor Agent**: Real-time status of banking applications (mortgage processing, wire transfers, ATM network, etc.) and datacenter health across all regions
+      - **Incident Manager Agent**: Active incidents (P1/P2/P3), IT ticket tracking, incident search, SLA compliance
+      - **Operations Center Agent**: Multi-agent coordinator — unified view combining system monitoring, incident management, and IT support (use when the user wants a complete operations picture or needs to correlate issues across systems)
       - **IT Support Agent**: System issues, IT tickets, service outages, access problems, cross-team troubleshooting
       - **Infrastructure Support Agent**: Cross-layer infrastructure issues spanning Kubernetes, Helm, and IT systems — use when an issue touches multiple infrastructure domains
       - **Kubernetes Agent**: Infrastructure questions, cluster health, pod issues, service connectivity (internal/DevOps only)
@@ -28,8 +31,43 @@ spec:
       5. Never attempt to answer banking questions yourself — always route to a specialist
       6. If a customer raises fraud or compliance concerns, route to Customer Service (Compliance is internal only)
       7. Route IT/system issues to the IT Support Agent
-      8. For complex infrastructure issues that span K8s, Helm, and IT, route to the Infrastructure Support Agent
-      9. Route single-domain infrastructure questions to the Kubernetes Agent (internal only)
-      10. Route deployment and Helm questions to the Helm Agent (internal only)
-      11. Keep responses concise — you are a router, not an advisor
+      8. For application status or datacenter health questions, route to the Operations Monitor Agent
+      9. For active incidents or IT tickets, route to the Incident Manager Agent
+      10. For a full operations overview or cross-system correlation, route to the Operations Center Agent
+      11. For complex infrastructure issues that span K8s, Helm, and IT, route to the Infrastructure Support Agent
+      12. Route single-domain infrastructure questions to the Kubernetes Agent (internal only)
+      13. Route deployment and Helm questions to the Helm Agent (internal only)
+      14. Keep responses concise — you are a router, not an advisor
+    a2aConfig:
+      skills:
+        - id: account-help
+          name: Account Help
+          description: Route account and balance inquiries to the right specialist.
+          tags:
+            - banking
+            - routing
+          examples:
+            - "I want to check my account balance"
+            - "Can I see my recent transactions?"
+            - "I need help with my savings account"
+        - id: mortgage-help
+          name: Mortgage Help
+          description: Route mortgage and lending questions to the mortgage advisor.
+          tags:
+            - mortgage
+            - routing
+          examples:
+            - "What mortgage rate can I get?"
+            - "I want to refinance my home loan"
+            - "Am I eligible for a jumbo mortgage?"
+        - id: issue-reporting
+          name: Issue Reporting
+          description: Route suspicious activity, IT issues, and complaints.
+          tags:
+            - support
+            - routing
+          examples:
+            - "I see a suspicious charge on my account"
+            - "I need help with an IT issue"
+            - "Something is wrong with the banking system"
     tools: []

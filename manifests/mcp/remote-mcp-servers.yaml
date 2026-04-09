@@ -27,3 +27,23 @@ spec:
   url: http://bank-transaction-tools.bank-wiki.svc.cluster.local:8083/mcp
   protocol: STREAMABLE_HTTP
   description: "Solo Bank transaction and account tools — transaction history, account details, search"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-status-tools
+  namespace: kagent
+spec:
+  url: http://bank-status-tools.bank-wiki.svc.cluster.local:8085/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank application status and datacenter monitoring tools"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-incident-tools
+  namespace: kagent
+spec:
+  url: http://bank-incident-tools.bank-wiki.svc.cluster.local:8086/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank incident management and IT ticketing tools"

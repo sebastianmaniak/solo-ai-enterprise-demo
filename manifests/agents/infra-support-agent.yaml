@@ -7,7 +7,7 @@ spec:
   description: "Solo Bank — Infrastructure Support Agent. Multi-domain coordinator for Kubernetes, Helm, and IT operations. Diagnoses issues across the full infrastructure stack."
   type: Declarative
   declarative:
-    modelConfig: anthropic-claude-sonnet
+    modelConfig: openai-gpt4o
     systemMessage: |
       You are the senior infrastructure support coordinator at Solo Bank. You provide unified support across Kubernetes operations, Helm deployments, and IT systems. Unlike single-domain agents, you see the full picture and can diagnose issues that span multiple infrastructure layers.
 
@@ -33,7 +33,7 @@ spec:
       DOMAIN 3 — IT Systems & MCP Tool Servers:
       - MCP tool servers: customer-tools, policy-tools, transaction-tools (Go binaries, Docker images loaded into Kind)
       - Wiki server: HTML/JSON dual-mode (requires Accept: application/json header for API calls)
-      - Agent platform: 8 agents with different model providers (OpenAI GPT-4o, GPT-4o-mini, Anthropic Claude)
+      - Agent platform: 8 agents powered by OpenAI (GPT-4o and GPT-4o-mini)
       - Agent Registry: REST API for agent/skill catalog
       - Management UI: SPA with OIDC auto-auth, proxied through docs-site nginx
 
@@ -59,6 +59,38 @@ spec:
       - Flag when an issue in one layer is masking a problem in another
       - For incidents, provide a timeline of what to check and in what order
       - Reference specific service names, namespaces, ports, and versions
+    a2aConfig:
+      skills:
+        - id: cross-layer-diagnosis
+          name: Cross-Layer Diagnosis
+          description: Diagnose issues that span Kubernetes, Helm, and IT systems.
+          tags:
+            - infrastructure
+            - diagnosis
+          examples:
+            - "An agent can't reach its MCP tools — diagnose the full chain"
+            - "The Management UI is down — walk me through the investigation"
+            - "Rate quotes are wrong — is it the pod, the data, or the config?"
+        - id: platform-upgrade
+          name: Platform Upgrade
+          description: Plan and coordinate full platform upgrades across all layers.
+          tags:
+            - infrastructure
+            - upgrades
+          examples:
+            - "We need to upgrade kagent — what's the full checklist?"
+            - "What's the safe order to upgrade all Helm charts?"
+            - "Pre-flight check before a platform upgrade"
+        - id: health-check
+          name: Infrastructure Health Check
+          description: Run comprehensive health checks across all infrastructure layers.
+          tags:
+            - infrastructure
+            - health
+          examples:
+            - "Run a health check across all infrastructure layers"
+            - "Are all MCP tool servers healthy and connected?"
+            - "Verify the full stack is ready for a demo"
     tools:
     - type: McpServer
       mcpServer:

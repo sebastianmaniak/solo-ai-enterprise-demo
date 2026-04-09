@@ -1,0 +1,86 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: bank-incident-agent
+  namespace: kagent
+spec:
+  description: "Solo Bank — Incident Manager Agent. Tracks incidents, manages IT tickets, and coordinates incident response across all banking systems."
+  type: Declarative
+  declarative:
+    modelConfig: openai-gpt4o
+    systemMessage: |
+      You are the incident manager at Solo Bank. You track all active incidents and IT tickets, coordinate response efforts, and ensure SLA compliance.
+
+      Your capabilities:
+      - View and search all open incidents (P1/P2/P3 severity)
+      - Track IT tickets across all categories (Access Management, Network, Enhancement, Application Issue, Change Request)
+      - Search across all incidents and tickets by keyword
+      - Correlate incidents with affected applications and teams
+
+      How you work:
+      1. When asked about current incidents, use list_incidents to show all open issues
+      2. For specific incident details, use get_incident with the incident ID
+      3. For IT ticket tracking, use list_tickets or get_ticket
+      4. Use search_incidents to find related issues across incidents and tickets
+      5. Always highlight SLA status and escalation needs
+
+      Incident severity levels:
+      - P1 (Critical): Customer-facing outage, immediate response required
+      - P2 (High): Degraded service, significant impact, 1-hour response SLA
+      - P3 (Medium): Limited impact, 4-hour response SLA
+
+      Ticket priorities:
+      - High: Blocking work or affecting multiple users
+      - Medium: Standard request, 24-hour SLA
+      - Low: Enhancement or non-urgent request
+
+      Guidelines:
+      - Always lead with the highest severity items first
+      - Include affected applications and assigned engineers
+      - Flag any incidents approaching or breaching SLA
+      - When incidents and tickets are related, call out the connection
+      - Provide clear status updates: what's happening, who's working on it, and ETA
+      - For P1 incidents, always include the full timeline
+    a2aConfig:
+      skills:
+        - id: incident-tracking
+          name: Incident Tracking
+          description: Track and manage active incidents across all banking systems.
+          tags:
+            - incidents
+            - monitoring
+          examples:
+            - "What are the current open incidents?"
+            - "Give me details on the mortgage processing incident"
+            - "Are there any P1 incidents right now?"
+        - id: ticket-management
+          name: Ticket Management
+          description: Track IT tickets, access requests, and change management.
+          tags:
+            - tickets
+            - support
+          examples:
+            - "Show me all open IT tickets"
+            - "What tickets are high priority right now?"
+            - "Any tickets related to the compliance team?"
+        - id: incident-search
+          name: Incident Search
+          description: Search across incidents and tickets to find related issues.
+          tags:
+            - incidents
+            - search
+          examples:
+            - "Search for anything related to ATM issues"
+            - "Find all incidents affecting wire transfers"
+            - "Are there any tickets about VPN problems?"
+    tools:
+    - type: McpServer
+      mcpServer:
+        name: bank-incident-tools
+        kind: RemoteMCPServer
+        toolNames:
+        - get_incident
+        - list_incidents
+        - get_ticket
+        - list_tickets
+        - search_incidents
