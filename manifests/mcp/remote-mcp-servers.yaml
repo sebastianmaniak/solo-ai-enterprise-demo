@@ -1,0 +1,29 @@
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-customer-tools
+  namespace: kagent
+spec:
+  url: http://bank-customer-tools.bank-wiki.svc.cluster.local:8081/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank customer data tools — lookup, search, account balances, transaction history"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-policy-tools
+  namespace: kagent
+spec:
+  url: http://bank-policy-tools.bank-wiki.svc.cluster.local:8082/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank policy and rates tools — lending policies, rate tables, credit tier lookups"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-transaction-tools
+  namespace: kagent
+spec:
+  url: http://bank-transaction-tools.bank-wiki.svc.cluster.local:8083/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank transaction and account tools — transaction history, account details, search"
