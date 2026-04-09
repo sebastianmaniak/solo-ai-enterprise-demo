@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture — Solo Bank AI Enterprise Demo</title>
+  <link rel="stylesheet" href="static/style.css" />
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">SB</div>
+      Solo Bank Demo
+    </a>
+    <ul class="nav-links">
+      <li><a href="guide.html">Usage Guide</a></li>
+      <li><a href="tutorial.html">Tutorial</a></li>
+      <li><a href="architecture.html" class="active">Architecture</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container">
+    <h1>Architecture Overview</h1>
+    <p>
+      Cluster layout, namespace topology, data flow, component versions, and agent-to-tool access matrix.
+    </p>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="container">
+  <div class="content">
+
+    <h2>Cluster Diagram</h2>
+    <p>
+      The entire demo runs inside a single-node Kind cluster named <code>solo-bank-demo</code>.
+      The diagram below shows the logical layout of namespaces and how traffic flows between components.
+    </p>
+
+    <div class="diagram">
+      <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        Kind Cluster: solo-bank-demo                         │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  namespace: agentgateway-system                                       │  │
+│  │                                                                       │  │
+│  │   ┌─────────────────────────┐   ┌──────────────────────────────┐    │  │
+│  │   │  enterprise-agentgateway│   │  management (UI + OTEL)       │    │  │
+│  │   │  NodePort: 30080        │   │  Port-forward: 4000→8090      │    │  │
+│  │   │  Gateway API proxy      │   │  Trace viewer + metrics        │    │  │
+│  │   └─────────────┬───────────┘   └──────────────────────────────┘    │  │
+│  │                 │  routes MCP traffic                                 │  │
+│  └─────────────────┼────────────────────────────────────────────────────┘  │
+│                    │                                                         │
+│  ┌─────────────────┼────────────────────────────────────────────────────┐  │
+│  │  namespace: kagent                │                                    │  │
+│  │                                   ▼                                    │  │
+│  │   ┌──────────────────────────────────────────────────────────────┐   │  │
+│  │   │  kagent-enterprise (agent runtime)                            │   │  │
+│  │   │  Port-forward: 3000→80   (kagent UI)                         │   │  │
+│  │   │                                                               │   │  │
+│  │   │  ┌──────────────────┐  ┌──────────────────────────────────┐  │   │  │
+│  │   │  │ bank-triage-agent│  │  bank-customer-service-agent     │  │   │  │
+│  │   │  │ Claude Sonnet    │  │  GPT-4o Mini                     │  │   │  │
+│  │   │  │ no tools         │  │  → customer-tools, txn-tools     │  │   │  │
+│  │   │  └──────────────────┘  └──────────────────────────────────┘  │   │  │
+│  │   │                                                               │   │  │
+│  │   │  ┌───────────────────────────┐  ┌─────────────────────────┐  │   │  │
+│  │   │  │ bank-mortgage-advisor     │  │ bank-compliance-agent   │  │   │  │
+│  │   │  │ Claude Sonnet             │  │ Claude Sonnet           │  │   │  │
+│  │   │  │ → customer, policy tools  │  │ → all 3 MCP servers     │  │   │  │
+│  │   │  └───────────────────────────┘  └─────────────────────────┘  │   │  │
+│  │   └──────────────────────────────────────────────────────────────┘   │  │
+│  │                                                                        │  │
+│  │   RemoteMCPServer CRDs:                                                │  │
+│  │     bank-customer-tools  → bank-wiki:8081/mcp                         │  │
+│  │     bank-policy-tools    → bank-wiki:8082/mcp                         │  │
+│  │     bank-transaction-tools → bank-wiki:8083/mcp                       │  │
+│  └────────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  namespace: bank-wiki                                                  │  │
+│  │                                                                        │  │
+│  │   ┌────────────────────┐  ┌────────────────────┐  ┌───────────────┐  │  │
+│  │   │ bank-customer-tools│  │ bank-policy-tools  │  │ bank-txn-tools│  │  │
+│  │   │ Port: 8081         │  │ Port: 8082         │  │ Port: 8083    │  │  │
+│  │   │ MCP via HTTP       │  │ MCP via HTTP       │  │ MCP via HTTP  │  │  │
+│  │   └────────────────────┘  └────────────────────┘  └───────────────┘  │  │
+│  │                                                                        │  │
+│  │   ┌────────────────────┐  ┌────────────────────────────────────────┐  │  │
+│  │   │ bank-wiki-server   │  │ bank-docs-site (this site)             │  │  │
+│  │   │ Port: 8080         │  │ NodePort: 30500                        │  │  │
+│  │   │ Policy documents   │  │ nginx static HTML docs                 │  │  │
+│  │   └────────────────────┘  └────────────────────────────────────────┘  │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │  namespace: agentregistry                                              │  │
+│  │   ┌─────────────────────────────────────────────────────────────┐    │  │
+│  │   │ agentregistry  NodePort: 30121  (skill catalog REST API)     │    │  │
+│  │   └─────────────────────────────────────────────────────────────┘    │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+External Access:
+  NodePort 30080 → AgentGateway (MCP endpoint)
+  NodePort 30121 → AgentRegistry (skill catalog API)
+  NodePort 30500 → Docs Site (this site)
+  Port-forward  → kagent UI (3000), Management UI (4000)</pre>
+    </div>
+
+    <!-- Namespaces -->
+    <h2>Namespace Inventory</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Namespace</th>
+            <th>Purpose</th>
+            <th>Key Workloads</th>
+            <th>Created By</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>agentgateway-system</code></td>
+            <td>MCP traffic proxy, observability, policy enforcement</td>
+            <td>enterprise-agentgateway, management, telemetry-collector</td>
+            <td>Helm chart (agentgateway)</td>
+          </tr>
+          <tr>
+            <td><code>agentregistry</code></td>
+            <td>Skill and tool catalog with REST API</td>
+            <td>agentregistry</td>
+            <td>Helm chart (agentregistry)</td>
+          </tr>
+          <tr>
+            <td><code>kagent</code></td>
+            <td>Agent runtime, CRD controllers, agent pods</td>
+            <td>kagent-enterprise, Agent CRDs, RemoteMCPServer CRDs</td>
+            <td>Helm chart (kagent)</td>
+          </tr>
+          <tr>
+            <td><code>bank-wiki</code></td>
+            <td>All banking application workloads</td>
+            <td>bank-wiki-server, bank-customer-tools, bank-policy-tools, bank-transaction-tools, bank-docs-site</td>
+            <td><code>manifests/namespaces.yaml</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Data Flow -->
+    <h2>Request Data Flow</h2>
+    <p>
+      The numbered steps below trace a complete request from a user typing in the kagent UI
+      to a tool response returning through the stack.
+    </p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>User Sends a Prompt</h3>
+        <p>
+          The user opens the kagent UI (<code>http://localhost:3000</code>), selects an agent
+          (e.g., <code>bank-customer-service-agent</code>), and types a message such as
+          "I'm John Smith, what's my balance?"
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>kagent Invokes the LLM</h3>
+        <p>
+          The kagent runtime reads the Agent CRD for <code>bank-customer-service-agent</code>,
+          assembles the system prompt and conversation history, and calls the configured LLM
+          (<code>openai-gpt4o-mini</code> model config). The LLM responds with a tool call:
+          <code>get_customer_by_name({"name": "John Smith"})</code>.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Tool Request Dispatched Through AgentGateway</h3>
+        <p>
+          kagent looks up the <code>RemoteMCPServer</code> named <code>bank-customer-tools</code>
+          and sends an MCP <code>tools/call</code> request to its URL. This traffic passes through
+          the AgentGateway proxy, which applies policy checks and emits an OTEL trace span.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>MCP Tool Server Executes the Tool</h3>
+        <p>
+          The <code>bank-customer-tools</code> pod in <code>namespace: bank-wiki</code> receives
+          the MCP request, executes the <code>get_customer_by_name</code> function against its
+          in-memory customer database, and returns a JSON result.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">5</div>
+        <h3>Response Flows Back Through AgentGateway</h3>
+        <p>
+          The tool result travels back through AgentGateway (another trace span is recorded) and
+          is returned to kagent. The OTEL spans for this round-trip are exported to the
+          telemetry-collector and visible in the Management UI.
+        </p>
+      </div>
+
+      <div class="step">
+        <div class="step-number">6</div>
+        <h3>LLM Generates Final Response</h3>
+        <p>
+          kagent feeds the tool result back to the LLM, which now composes a final human-readable
+          response: "Thank you, John. Your checking account balance is $4,280.50 and your savings
+          balance is $12,450.00." This response is streamed back to the kagent UI.
+        </p>
+      </div>
+    </div>
+
+    <!-- Component Versions -->
+    <h2>Component Versions</h2>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Version</th>
+            <th>Image / Chart</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>kagent</strong></td>
+            <td>v0.3+</td>
+            <td>Helm chart: <code>oci://ghcr.io/kagent-dev/kagent/helm/kagent</code></td>
+            <td>Enterprise edition via license key</td>
+          </tr>
+          <tr>
+            <td><strong>AgentGateway</strong></td>
+            <td>Enterprise v2.2.x</td>
+            <td>Helm chart: <code>oci://ghcr.io/solo-io/enterprise-agentgateway/helm</code></td>
+            <td>Requires <code>AGENTGATEWAY_LICENSE_KEY</code></td>
+          </tr>
+          <tr>
+            <td><strong>AgentRegistry</strong></td>
+            <td>OSS v0.1+</td>
+            <td>Helm chart: <code>oci://ghcr.io/solo-io/agentregistry/helm/agentregistry</code></td>
+            <td>Open-source; no license required</td>
+          </tr>
+          <tr>
+            <td><strong>Gateway API CRDs</strong></td>
+            <td>v1.5.0</td>
+            <td><code>standard-install.yaml</code> from kubernetes-sigs</td>
+            <td>Required by AgentGateway</td>
+          </tr>
+          <tr>
+            <td><strong>Kind</strong></td>
+            <td>v0.20+</td>
+            <td>Local cluster</td>
+            <td>Single-node; ports 30080, 30121, 30500 mapped</td>
+          </tr>
+          <tr>
+            <td><strong>Claude Sonnet</strong></td>
+            <td>claude-sonnet-4 (latest)</td>
+            <td>Anthropic API</td>
+            <td>Used by Triage, Mortgage Advisor, Compliance agents</td>
+          </tr>
+          <tr>
+            <td><strong>GPT-4o Mini</strong></td>
+            <td>gpt-4o-mini (latest)</td>
+            <td>OpenAI API</td>
+            <td>Used by Customer Service Agent</td>
+          </tr>
+          <tr>
+            <td><strong>nginx</strong></td>
+            <td>alpine (latest)</td>
+            <td>Docker Hub <code>nginx:alpine</code></td>
+            <td>Serves this docs site</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Agent Tool Matrix -->
+    <h2>Agent Tool Access Matrix</h2>
+    <p>
+      This table shows which MCP servers each agent has access to. Access is defined in the
+      Agent CRD's <code>spec.declarative.tools</code> list.
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Model</th>
+            <th>Customer Tools<br><small>(port 8081)</small></th>
+            <th>Policy Tools<br><small>(port 8082)</small></th>
+            <th>Transaction Tools<br><small>(port 8083)</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <strong>Triage Agent</strong><br>
+              <code>bank-triage-agent</code>
+            </td>
+            <td><span class="badge badge-model">Claude Sonnet</span></td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Customer Service Agent</strong><br>
+              <code>bank-customer-service-agent</code>
+            </td>
+            <td><span class="badge badge-model">GPT-4o Mini</span></td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Mortgage Advisor Agent</strong><br>
+              <code>bank-mortgage-advisor-agent</code>
+            </td>
+            <td><span class="badge badge-model">Claude Sonnet</span></td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+          </tr>
+          <tr>
+            <td>
+              <strong>Compliance Agent</strong><br>
+              <code>bank-compliance-agent</code>
+            </td>
+            <td><span class="badge badge-model">Claude Sonnet</span></td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Compliance Agent is Internal Only</strong>
+        The Compliance Agent has the broadest tool access — all three MCP servers. It is
+        intended for internal bank staff only. The Triage Agent's system prompt explicitly
+        prevents routing customers to it.
+      </div>
+    </div>
+
+    <!-- MCP Tool Inventory -->
+    <h2>MCP Tool Inventory</h2>
+    <p>
+      Each MCP server exposes multiple tools. Below is a summary of what each server provides:
+    </p>
+
+    <h3>bank-customer-tools (port 8081)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>get_customer_by_id</code></td>
+            <td>Look up a customer profile by Customer ID (e.g., CUST-00042)</td>
+          </tr>
+          <tr>
+            <td><code>get_customer_by_name</code></td>
+            <td>Search for a customer by full name or partial name</td>
+          </tr>
+          <tr>
+            <td><code>get_account_balance</code></td>
+            <td>Retrieve account balances for all accounts associated with a customer</td>
+          </tr>
+          <tr>
+            <td><code>search_customers</code></td>
+            <td>Search customers by various criteria (city, credit tier, account type)</td>
+          </tr>
+          <tr>
+            <td><code>list_customers</code></td>
+            <td>Return a paginated list of all customers</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>bank-policy-tools (port 8082)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>get_policy</code></td>
+            <td>Retrieve a specific bank policy document by slug (e.g., "lending-policy-2025")</td>
+          </tr>
+          <tr>
+            <td><code>list_policies</code></td>
+            <td>List all available bank policy documents</td>
+          </tr>
+          <tr>
+            <td><code>get_rate_table</code></td>
+            <td>Retrieve current rate tables for mortgage products by credit tier</td>
+          </tr>
+          <tr>
+            <td><code>search_policies</code></td>
+            <td>Full-text search across all policy documents</td>
+          </tr>
+          <tr>
+            <td><code>get_credit_tier</code></td>
+            <td>Determine the credit tier (Excellent/Good/Fair/Poor) for a given credit score</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>bank-transaction-tools (port 8083)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>get_transactions</code></td>
+            <td>Retrieve recent transactions for a customer, with optional date range and limit</td>
+          </tr>
+          <tr>
+            <td><code>get_transaction_by_id</code></td>
+            <td>Look up a specific transaction by its transaction ID</td>
+          </tr>
+          <tr>
+            <td><code>search_transactions</code></td>
+            <td>Search transactions by amount, merchant, date, or type</td>
+          </tr>
+          <tr>
+            <td><code>get_large_transactions</code></td>
+            <td>Return transactions above a specified amount threshold (AML use case)</td>
+          </tr>
+          <tr>
+            <td><code>get_account_summary</code></td>
+            <td>Return aggregate account stats: total debits, credits, and balance trend</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Gateway Config -->
+    <h2>AgentGateway Configuration</h2>
+    <p>
+      The AgentGateway is configured using Gateway API resources. The core objects are:
+    </p>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Resource Kind</th>
+            <th>Name</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>GatewayClass</code></td>
+            <td>enterprise-agentgateway</td>
+            <td>Declares the AgentGateway controller</td>
+          </tr>
+          <tr>
+            <td><code>Gateway</code></td>
+            <td>agentgateway-proxy</td>
+            <td>Listener on port 80 in namespace agentgateway-system</td>
+          </tr>
+          <tr>
+            <td><code>EnterpriseAgentgatewayParameters</code></td>
+            <td>tracing</td>
+            <td>Attaches OTEL tracing to the gateway via parametersRef</td>
+          </tr>
+          <tr>
+            <td><code>EnterpriseAgentgatewayPolicy</code></td>
+            <td>tracing</td>
+            <td>Routes OTEL spans to the telemetry-collector on port 4317</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>Powered by <strong>Solo.io</strong> — AI Enterprise Platform for Kubernetes</p>
+    <div class="footer-versions">
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        kagent v0.3+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentGateway Enterprise v2.2.x
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentRegistry OSS v0.1+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        Kind v0.20+
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

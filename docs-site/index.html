@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solo Bank — AI Enterprise Demo</title>
+  <link rel="stylesheet" href="static/style.css" />
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">SB</div>
+      Solo Bank Demo
+    </a>
+    <ul class="nav-links">
+      <li><a href="guide.html">Usage Guide</a></li>
+      <li><a href="tutorial.html">Tutorial</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">Solo.io AI Enterprise Platform</div>
+  <h1>Solo Bank<br>AI Enterprise Demo</h1>
+  <p>
+    A fully functional multi-agent banking demo built on the Solo.io platform —
+    featuring kagent, AgentGateway, AgentRegistry, and MCP tool servers running
+    end-to-end inside a local Kubernetes cluster.
+  </p>
+  <div class="hero-actions">
+    <a href="guide.html" class="btn btn-primary">Read the Usage Guide</a>
+    <a href="tutorial.html" class="btn btn-outline">Build Your Own Agent</a>
+  </div>
+</section>
+
+<!-- Overview Cards -->
+<div class="container">
+  <section class="section">
+    <h2 class="section-title">Explore the Demo</h2>
+    <p class="section-subtitle">Everything you need to understand, interact with, and extend the Solo Bank AI demo.</p>
+
+    <div class="cards">
+
+      <!-- Usage Guide -->
+      <div class="card">
+        <div class="card-icon">📖</div>
+        <h3>Usage Guide</h3>
+        <p>
+          Learn how to interact with the four banking agents — Triage, Customer Service,
+          Mortgage Advisor, and Compliance. Includes example prompts, identity verification
+          flows, and how to view OTEL traces.
+        </p>
+        <a href="guide.html" class="card-link">Read the guide</a>
+      </div>
+
+      <!-- Tutorial -->
+      <div class="card">
+        <div class="card-icon">🛠️</div>
+        <h3>Build Your Own Agent</h3>
+        <p>
+          Step-by-step tutorial to create a custom MCP tool server in Go, register it in
+          AgentRegistry, wire it to a kagent Agent CRD, and test it live in the cluster —
+          all in under 30 minutes.
+        </p>
+        <a href="tutorial.html" class="card-link">Start the tutorial</a>
+      </div>
+
+      <!-- Architecture -->
+      <div class="card">
+        <div class="card-icon">🏗️</div>
+        <h3>Architecture</h3>
+        <p>
+          Explore the full system architecture: namespace layout, data-flow through
+          AgentGateway, MCP server topology, agent-to-tool access matrix, and component
+          version table.
+        </p>
+        <a href="architecture.html" class="card-link">View architecture</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- What's in the demo -->
+  <section class="section" style="padding-top: 0;">
+    <h2 class="section-title">What's in the Demo</h2>
+    <p class="section-subtitle">Four specialist agents, three MCP tool servers, and a full observability pipeline.</p>
+
+    <div class="cards">
+      <div class="card">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Triage Agent</h3>
+        <p>
+          Front-door router. Greets customers, understands intent, and routes to the correct
+          specialist. Powered by <strong>Claude Sonnet</strong>. No tools — pure routing logic.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Customer Service Agent</h3>
+        <p>
+          Handles account inquiries, balance checks, and transaction reviews after verifying
+          customer identity. Powered by <strong>GPT-4o Mini</strong> with customer and
+          transaction tool access.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Mortgage Advisor Agent</h3>
+        <p>
+          Provides personalized mortgage rate quotes by looking up customer credit scores,
+          applying rate tables, and checking lending policies. Powered by
+          <strong>Claude Sonnet</strong>.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-agent" style="margin-bottom: 14px;">Agent</span>
+        <h3>Compliance Agent</h3>
+        <p>
+          Internal-only agent for policy audits and AML/KYC review. Has full access to all
+          customer data, transactions, and bank policies. Generates structured compliance
+          reports.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-tool" style="margin-bottom: 14px;">MCP Server</span>
+        <h3>Customer Tools</h3>
+        <p>
+          Exposes customer lookup, profile retrieval, account balance, and search capabilities
+          over the <code>STREAMABLE_HTTP</code> MCP protocol on port 8081.
+        </p>
+      </div>
+
+      <div class="card">
+        <span class="badge badge-tool" style="margin-bottom: 14px;">MCP Server</span>
+        <h3>Policy &amp; Transaction Tools</h3>
+        <p>
+          Separate MCP servers for bank policy lookups (lending, KYC/AML, rate tables) and
+          transaction history/account analytics — ports 8082 and 8083 respectively.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Platform Stack -->
+  <section class="section" style="padding-top: 0;">
+    <h2 class="section-title">Platform Stack</h2>
+    <p class="section-subtitle">Built on production-grade Solo.io components running in Kind.</p>
+
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th>Role</th>
+            <th>Namespace</th>
+            <th>Access</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>kagent</strong></td>
+            <td>Kubernetes-native agent runtime (CRD-based)</td>
+            <td><code>kagent</code></td>
+            <td>Port-forward :3000</td>
+          </tr>
+          <tr>
+            <td><strong>AgentGateway</strong> (Enterprise)</td>
+            <td>MCP proxy with auth, tracing, policy enforcement</td>
+            <td><code>agentgateway-system</code></td>
+            <td>NodePort 30080</td>
+          </tr>
+          <tr>
+            <td><strong>AgentRegistry</strong></td>
+            <td>Skill and tool catalog with REST API</td>
+            <td><code>agentregistry</code></td>
+            <td>NodePort 30121</td>
+          </tr>
+          <tr>
+            <td><strong>Management UI</strong></td>
+            <td>OTEL trace viewer and gateway observability</td>
+            <td><code>agentgateway-system</code></td>
+            <td>Port-forward :4000</td>
+          </tr>
+          <tr>
+            <td><strong>Bank Wiki</strong></td>
+            <td>Content and policy document server</td>
+            <td><code>bank-wiki</code></td>
+            <td>Port-forward :8080</td>
+          </tr>
+          <tr>
+            <td><strong>Docs Site</strong> (this site)</td>
+            <td>Static nginx documentation</td>
+            <td><code>bank-wiki</code></td>
+            <td>NodePort 30500</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>Powered by <strong>Solo.io</strong> — AI Enterprise Platform for Kubernetes</p>
+    <div class="footer-versions">
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        kagent v0.3+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentGateway Enterprise v2.2.x
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentRegistry OSS v0.1+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        Kind v0.20+
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

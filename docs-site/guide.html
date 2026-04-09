@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Usage Guide — Solo Bank AI Enterprise Demo</title>
+  <link rel="stylesheet" href="static/style.css" />
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">SB</div>
+      Solo Bank Demo
+    </a>
+    <ul class="nav-links">
+      <li><a href="guide.html" class="active">Usage Guide</a></li>
+      <li><a href="tutorial.html">Tutorial</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container">
+    <h1>Usage Guide</h1>
+    <p>How to interact with the Solo Bank AI agents, explore traces, and query the wiki API.</p>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="container">
+  <div class="content">
+
+    <!-- Getting Started -->
+    <h2>Getting Started</h2>
+    <p>
+      The Solo Bank demo runs entirely inside a local Kind cluster named <code>solo-bank-demo</code>.
+      Some services are exposed via NodePort (no port-forward needed), and others require
+      <code>kubectl port-forward</code> to access from your browser or terminal.
+    </p>
+
+    <h3>Direct Access (NodePort — no port-forward needed)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>URL</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>AgentGateway</strong></td>
+            <td><code>http://localhost:30080</code></td>
+            <td>MCP proxy endpoint — send agent requests here</td>
+          </tr>
+          <tr>
+            <td><strong>AgentRegistry</strong></td>
+            <td><code>http://localhost:30121</code></td>
+            <td>Skill catalog REST API</td>
+          </tr>
+          <tr>
+            <td><strong>Docs Site</strong></td>
+            <td><code>http://localhost:30500</code></td>
+            <td>This documentation site</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Port-Forward Commands (Management UI and kagent)</h3>
+    <p>Run each command in a separate terminal and keep them running while you use the UI:</p>
+
+    <pre><code># Management UI — OTEL traces and gateway observability
+kubectl port-forward svc/management -n agentgateway-system 4000:8090
+
+# Then open: http://localhost:4000
+
+# kagent UI — talk to agents in your browser
+kubectl port-forward svc/kagent-enterprise -n kagent 3000:80
+
+# Then open: http://localhost:3000
+
+# Bank Wiki Server — direct API access
+kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080
+
+# Then open: http://localhost:8080/health</code></pre>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Kind Cluster Required</strong>
+        The demo requires the Kind cluster <code>solo-bank-demo</code> to be running.
+        If you haven't set it up yet, run <code>./setup.sh</code> from the project root.
+        You'll need <code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, and
+        <code>AGENTGATEWAY_LICENSE_KEY</code> set in your environment.
+      </div>
+    </div>
+
+    <!-- Triage Agent -->
+    <h2>Talking to the Triage Agent</h2>
+    <p>
+      The Triage Agent (<code>bank-triage-agent</code>) is the front door to the Solo Bank system.
+      Open the kagent UI at <code>http://localhost:3000</code>, select
+      <strong>bank-triage-agent</strong> from the agent dropdown, and type your request.
+    </p>
+    <p>
+      The Triage Agent does not answer banking questions itself — it greets you, identifies your
+      need, and routes you to the right specialist with a brief explanation.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">I want to check my account balance</div>
+    <div class="prompt-example">What mortgage rate can I get for a 30-year fixed loan?</div>
+    <div class="prompt-example">I need help with a suspicious transaction on my account</div>
+    <div class="prompt-example">I'm interested in refinancing my home</div>
+    <div class="prompt-example">Can you help me find out if I qualify for a home equity line?</div>
+
+    <h3>Expected Routing Behavior</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Request Type</th>
+            <th>Routes To</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Account balance, transactions, disputes</td>
+            <td><span class="badge badge-agent">Customer Service Agent</span></td>
+            <td>Will ask for identity verification</td>
+          </tr>
+          <tr>
+            <td>Mortgage rates, refinancing, home equity</td>
+            <td><span class="badge badge-agent">Mortgage Advisor Agent</span></td>
+            <td>Will look up credit profile</td>
+          </tr>
+          <tr>
+            <td>Suspicious activity, fraud report</td>
+            <td><span class="badge badge-agent">Customer Service Agent</span></td>
+            <td>Compliance is internal only; CS handles escalation</td>
+          </tr>
+          <tr>
+            <td>Ambiguous requests</td>
+            <td><em>Clarifying question</em></td>
+            <td>Asks exactly one question before routing</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Customer Service Agent -->
+    <h2>Using the Customer Service Agent</h2>
+    <p>
+      The Customer Service Agent (<code>bank-customer-service-agent</code>) handles account
+      inquiries, balance lookups, and transaction reviews. It is powered by
+      <strong>GPT-4o Mini</strong> and has access to the
+      <code>bank-customer-tools</code> and <code>bank-transaction-tools</code> MCP servers.
+    </p>
+
+    <div class="callout callout-warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Identity Verification Required</strong>
+        Before sharing any account details, the Customer Service Agent will always ask for
+        the customer's full name or Customer ID. This step cannot be skipped — it's part of
+        the system prompt's security instructions.
+      </div>
+    </div>
+
+    <h3>Example Conversation Flow</h3>
+    <pre><code>You:    I need to check my account balance.
+
+Agent:  Of course! To protect your privacy, I'll need to verify
+        your identity first. Could you please provide your full
+        name or your Customer ID?
+
+You:    I'm John Smith.
+
+Agent:  Thank you, John. I found your profile. You have two accounts:
+        - Checking Account (****1234): $4,280.50
+        - Savings Account (****5678): $12,450.00
+
+        Would you like to review recent transactions on either account?
+
+You:    Yes, show me the last 5 transactions on my checking account.
+
+Agent:  Here are your 5 most recent checking account transactions:
+        1. 2025-01-15  Whole Foods Market         -$87.43
+        2. 2025-01-14  Direct Deposit — Payroll   +$3,200.00
+        3. 2025-01-13  Netflix                    -$15.99
+        4. 2025-01-12  Shell Gas Station          -$62.10
+        5. 2025-01-11  Amazon.com                 -$129.99</code></pre>
+
+    <h3>Try These Prompts in kagent UI</h3>
+    <div class="prompt-example">I'm John Smith, can you check my balance?</div>
+    <div class="prompt-example">My Customer ID is CUST-00042 — what's in my savings account?</div>
+    <div class="prompt-example">Can you show me transactions over $500 in the last 30 days?</div>
+    <div class="prompt-example">I see a charge I don't recognize — can you help me dispute it?</div>
+
+    <!-- Mortgage Advisor Agent -->
+    <h2>Using the Mortgage Advisor Agent</h2>
+    <p>
+      The Mortgage Advisor Agent (<code>bank-mortgage-advisor-agent</code>) provides personalized
+      mortgage rate quotes by looking up the customer's credit score, applying bank rate tables,
+      and checking lending policies. Powered by <strong>Claude Sonnet</strong>.
+    </p>
+
+    <h3>How Personalized Rates Work</h3>
+    <p>The agent follows a structured advisory process:</p>
+    <ol>
+      <li>Looks up the customer profile to retrieve credit score and salary</li>
+      <li>Determines the credit tier using the <code>credit-score-tiers</code> policy</li>
+      <li>Retrieves current rates for the requested mortgage type from the rate table</li>
+      <li>Calculates Debt-to-Income (DTI) ratio using salary and existing obligations</li>
+      <li>Checks down payment requirements and relationship discount eligibility</li>
+      <li>Presents a clear, policy-cited recommendation</li>
+    </ol>
+
+    <h3>Example Prompt</h3>
+    <div class="prompt-example">What rate would customer CUST-00042 qualify for on a 30-year fixed mortgage?</div>
+
+    <h3>Sample Response Format</h3>
+    <pre><code>Based on the customer profile for CUST-00042 (Maria Garcia):
+
+Credit Score:  742 → Credit Tier: "Good" (720–759)
+Annual Salary: $95,000
+Existing Debt: $850/month
+
+Current 30-Year Fixed Rates (per policy "mortgage-rates-2025"):
+  Good tier rate: 6.75% APR
+
+DTI Calculation:
+  Monthly Income: $7,917
+  Proposed payment (for $350,000 loan at 6.75%): $2,270/month
+  Total DTI: (850 + 2,270) / 7,917 = 39.4% — within the 43% policy limit
+
+Customer qualifies for a 30-year fixed at 6.75% APR.
+Maria has been a customer for 6 years, making her eligible for
+the 5-year relationship discount: -0.125%, bringing her to 6.625%.
+
+Recommendation: Approve at 6.625% with standard 20% down payment.</code></pre>
+
+    <h3>More Prompts to Try</h3>
+    <div class="prompt-example">Can CUST-00003 qualify for a 15-year fixed mortgage?</div>
+    <div class="prompt-example">What would refinancing look like for a customer with a 680 credit score?</div>
+    <div class="prompt-example">What's the minimum down payment for a jumbo loan?</div>
+    <div class="prompt-example">Which customers would benefit most from refinancing at current rates?</div>
+
+    <!-- Compliance Agent -->
+    <h2>Using the Compliance Agent</h2>
+    <p>
+      The Compliance Agent (<code>bank-compliance-agent</code>) is an <strong>internal-only</strong>
+      agent for bank staff. It reviews customer accounts for AML/KYC flags, suspicious transaction
+      patterns, rate mismatches, and regulatory violations. Never route customers to this agent.
+    </p>
+    <p>
+      It has full access to all three MCP servers: customer tools, policy tools, and transaction
+      tools. Powered by <strong>Claude Sonnet</strong>.
+    </p>
+
+    <h3>Example Prompt</h3>
+    <div class="prompt-example">Review customer CUST-00003 for compliance issues</div>
+
+    <h3>Sample Structured Output</h3>
+    <pre><code>## Compliance Review: James Wilson (CUST-00003)
+### Risk Rating: Medium
+
+### Findings:
+- **AML-001**: Transaction on 2025-01-08 of $11,200 (wire transfer, international)
+  exceeds $10,000 threshold — per KYC/AML Policy §4.2, must have SAR filed within 30 days.
+  No SAR record found in transaction notes.
+
+- **RATE-002**: Customer's credit card APR is 22.99%. Credit score is 715 (Fair tier).
+  Policy "credit-card-apr-schedule" specifies Fair tier max APR of 21.99%.
+  Customer is being charged 1.00% above policy ceiling.
+
+- **KYC-001**: Customer has an active AML flag (set 2025-01-08) with no escalation record.
+  KYC Policy §2.1 requires escalation to compliance officer within 5 business days.
+
+### Recommendations:
+- File SAR for the $11,200 international wire transfer immediately
+- Correct credit card APR from 22.99% to 21.99% in the next billing cycle
+- Escalate AML flag to senior compliance officer and document in CRM
+- Schedule 90-day enhanced monitoring per KYC Policy §3.4</code></pre>
+
+    <h3>More Compliance Prompts</h3>
+    <div class="prompt-example">Review customer CUST-00001 for AML red flags in the last 90 days</div>
+    <div class="prompt-example">Are all customers with active flags properly escalated?</div>
+    <div class="prompt-example">Check whether CUST-00042 is receiving the correct mortgage rate for their credit tier</div>
+    <div class="prompt-example">Run a compliance audit across all customers with international wire transfers</div>
+
+    <!-- Viewing Traces -->
+    <h2>Viewing Traces in the Management UI</h2>
+    <p>
+      Every request flowing through AgentGateway is instrumented with OpenTelemetry (OTEL) and
+      exported to the built-in telemetry collector. The Management UI lets you explore these traces
+      visually.
+    </p>
+
+    <h3>How to Access Traces</h3>
+    <pre><code># Start the port-forward (keep this terminal open)
+kubectl port-forward svc/management -n agentgateway-system 4000:8090
+
+# Open in browser
+open http://localhost:4000</code></pre>
+
+    <h3>What the Traces Show</h3>
+    <ul>
+      <li><strong>Request ingress</strong> — when the MCP request arrives at AgentGateway</li>
+      <li><strong>Policy enforcement</strong> — any auth or rate-limit checks applied</li>
+      <li><strong>Upstream routing</strong> — which MCP backend the request was forwarded to</li>
+      <li><strong>Tool call spans</strong> — individual tool invocations within an agent session</li>
+      <li><strong>Latency breakdown</strong> — time spent in each component</li>
+      <li><strong>Error spans</strong> — any failures with status codes and error messages</li>
+    </ul>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Tip: Filter by Agent</strong>
+        Use the service filter in the Management UI to isolate traces for a specific agent.
+        The service name corresponds to the <code>RemoteMCPServer</code> name defined in
+        <code>manifests/mcp/remote-mcp-servers.yaml</code>.
+      </div>
+    </div>
+
+    <!-- Wiki API -->
+    <h2>Exploring the Wiki Directly</h2>
+    <p>
+      The Bank Wiki server hosts all policy documents, rate tables, and KYC/AML guidelines
+      referenced by the Mortgage Advisor and Compliance agents. You can query it directly
+      using <code>kubectl exec</code> or via port-forward.
+    </p>
+
+    <h3>Health Check</h3>
+    <pre><code>WIKI_POD=$(kubectl get pod -l app=bank-wiki-server -n bank-wiki \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl exec "$WIKI_POD" -n bank-wiki -- wget -qO- http://localhost:8080/health</code></pre>
+
+    <h3>List All Documents</h3>
+    <pre><code>kubectl exec "$WIKI_POD" -n bank-wiki -- \
+  wget -qO- http://localhost:8080/api/documents | jq '.documents[].title'</code></pre>
+
+    <h3>Search the Wiki</h3>
+    <pre><code># Search for AML-related policies
+kubectl exec "$WIKI_POD" -n bank-wiki -- \
+  wget -qO- "http://localhost:8080/api/search?q=AML" | jq '.'
+
+# Search for mortgage rate tables
+kubectl exec "$WIKI_POD" -n bank-wiki -- \
+  wget -qO- "http://localhost:8080/api/search?q=mortgage+rates" | jq '.'</code></pre>
+
+    <h3>Port-Forward Alternative</h3>
+    <pre><code># Port-forward the wiki server
+kubectl port-forward svc/bank-wiki-server -n bank-wiki 8080:8080
+
+# Then use curl from your local machine
+curl http://localhost:8080/api/search?q=credit-score-tiers
+curl http://localhost:8080/api/documents/lending-policy-2025</code></pre>
+
+    <h3>Available Wiki Endpoints</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Path</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-success">GET</span></td>
+            <td><code>/health</code></td>
+            <td>Health check — returns 200 OK when ready</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-success">GET</span></td>
+            <td><code>/api/documents</code></td>
+            <td>List all policy and rate documents</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-success">GET</span></td>
+            <td><code>/api/documents/:slug</code></td>
+            <td>Retrieve a specific document by slug</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-success">GET</span></td>
+            <td><code>/api/search?q=query</code></td>
+            <td>Full-text search across all documents</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>Powered by <strong>Solo.io</strong> — AI Enterprise Platform for Kubernetes</p>
+    <div class="footer-versions">
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        kagent v0.3+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentGateway Enterprise v2.2.x
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentRegistry OSS v0.1+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        Kind v0.20+
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Build Your Own Agent — Solo Bank AI Enterprise Demo</title>
+  <link rel="stylesheet" href="static/style.css" />
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo-icon">SB</div>
+      Solo Bank Demo
+    </a>
+    <ul class="nav-links">
+      <li><a href="guide.html">Usage Guide</a></li>
+      <li><a href="tutorial.html" class="active">Tutorial</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="container">
+    <h1>Build Your Own Agent</h1>
+    <p>
+      A step-by-step tutorial: create a custom MCP tool server in Go, register it in AgentRegistry,
+      wire it to a kagent Agent CRD, and test it — all in about 30 minutes.
+    </p>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="container">
+  <div class="content">
+
+    <h2>Overview</h2>
+    <p>
+      In this tutorial you'll build an <strong>Account Summary Agent</strong> — a custom agent
+      that generates brief, at-a-glance summaries of customer accounts. You'll learn every layer
+      of the Solo.io AI Enterprise Platform:
+    </p>
+    <ul>
+      <li>Writing an MCP tool server in Go using the MCP SDK</li>
+      <li>Packaging it as a Docker image and loading it into Kind</li>
+      <li>Registering the skill in AgentRegistry via REST API</li>
+      <li>Creating a <code>RemoteMCPServer</code> Kubernetes resource</li>
+      <li>Defining an <code>Agent</code> CRD and wiring it to your tool server</li>
+      <li>Testing the agent live in the kagent UI</li>
+    </ul>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Prerequisites</strong>
+        You should have completed the initial <code>./setup.sh</code> and have the
+        <code>solo-bank-demo</code> Kind cluster running. You'll need Go 1.21+, Docker,
+        and <code>kubectl</code> configured for the cluster.
+      </div>
+    </div>
+
+    <h2>Step-by-Step Tutorial</h2>
+
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Create an MCP Tool Server in Go</h3>
+        <p>
+          MCP (Model Context Protocol) tool servers expose callable functions to AI agents over HTTP.
+          Create the directory structure and write the main server file:
+        </p>
+        <pre><code>mkdir -p sample-agent/mcp-server
+cd sample-agent/mcp-server
+go mod init account-summary-tools</code></pre>
+
+        <p>Then create <code>sample-agent/mcp-server/main.go</code>:</p>
+        <pre><code>package main
+
+import (
+    "context"
+    "encoding/json"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
+
+    "github.com/mark3labs/mcp-go/mcp"
+    "github.com/mark3labs/mcp-go/server"
+)
+
+// AccountSummary holds the data we return to the agent
+type AccountSummary struct {
+    CustomerID   string  `json:"customer_id"`
+    Name         string  `json:"name"`
+    CreditScore  int     `json:"credit_score"`
+    TotalBalance float64 `json:"total_balance"`
+    AccountCount int     `json:"account_count"`
+    RiskLevel    string  `json:"risk_level"`
+    Summary      string  `json:"summary"`
+}
+
+func main() {
+    // Create the MCP server
+    s := server.NewMCPServer(
+        "account-summary-tools",
+        "1.0.0",
+        server.WithToolCapabilities(true),
+    )
+
+    // Register the get_account_summary tool
+    tool := mcp.NewTool(
+        "get_account_summary",
+        mcp.WithDescription(
+            "Generate a brief account summary for a bank customer. "+
+            "Returns credit score, total balance, account count, "+
+            "risk level, and a plain-language summary.",
+        ),
+        mcp.WithString(
+            "customer_id",
+            mcp.Required(),
+            mcp.Description("The customer ID, e.g. CUST-00042"),
+        ),
+    )
+
+    s.AddTool(tool, func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+        customerID, ok := req.Params.Arguments["customer_id"].(string)
+        if !ok || customerID == "" {
+            return mcp.NewToolResultError("customer_id is required"), nil
+        }
+
+        // In a real implementation, call the customer-tools MCP server.
+        // Here we return mock data for the tutorial.
+        summary := generateSummary(customerID)
+
+        data, err := json.MarshalIndent(summary, "", "  ")
+        if err != nil {
+            return mcp.NewToolResultError(fmt.Sprintf("marshal error: %v", err)), nil
+        }
+
+        return mcp.NewToolResultText(string(data)), nil
+    })
+
+    // Start the HTTP server
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8084"
+    }
+
+    httpServer := server.NewStreamableHTTPServer(s)
+    log.Printf("Account Summary Tools MCP server listening on :%s/mcp", port)
+    if err := http.ListenAndServe(":"+port, httpServer); err != nil {
+        log.Fatalf("Server error: %v", err)
+    }
+}
+
+// generateSummary returns a mock account summary.
+// In production, replace this with calls to bank-customer-tools.
+func generateSummary(customerID string) AccountSummary {
+    // Simulate different customers
+    summaries := map[string]AccountSummary{
+        "CUST-00042": {
+            CustomerID:   "CUST-00042",
+            Name:         "Maria Garcia",
+            CreditScore:  742,
+            TotalBalance: 28450.00,
+            AccountCount: 3,
+            RiskLevel:    "Low",
+            Summary: "Maria is a long-standing customer (6 years) with good credit " +
+                "and healthy balances across checking, savings, and a CD account. " +
+                "No flags or compliance concerns.",
+        },
+        "CUST-00003": {
+            CustomerID:   "CUST-00003",
+            Name:         "James Wilson",
+            CreditScore:  715,
+            TotalBalance: 6200.00,
+            AccountCount: 2,
+            RiskLevel:    "Medium",
+            Summary: "James has fair credit and moderate balances. Active AML flag " +
+                "from an international wire transfer on 2025-01-08 requires follow-up.",
+        },
+    }
+
+    if s, ok := summaries[customerID]; ok {
+        return s
+    }
+
+    return AccountSummary{
+        CustomerID:   customerID,
+        Name:         "Unknown",
+        CreditScore:  0,
+        TotalBalance: 0,
+        AccountCount: 0,
+        RiskLevel:    "Unknown",
+        Summary:      fmt.Sprintf("No data found for customer %s.", customerID),
+    }
+}</code></pre>
+
+        <p>Add the MCP SDK dependency:</p>
+        <pre><code>go get github.com/mark3labs/mcp-go@latest
+go mod tidy</code></pre>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Build the Docker Image and Load into Kind</h3>
+        <p>
+          Create a Dockerfile for the MCP server, build the image, and load it directly into the
+          Kind cluster (no registry required):
+        </p>
+
+        <p>Create <code>sample-agent/mcp-server/Dockerfile</code>:</p>
+        <pre><code>FROM golang:1.21-alpine AS builder
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o /account-summary-tools .
+
+FROM scratch
+COPY --from=builder /account-summary-tools /account-summary-tools
+EXPOSE 8084
+ENTRYPOINT ["/account-summary-tools"]</code></pre>
+
+        <p>Build and load into the cluster:</p>
+        <pre><code># Build the image
+docker build -t account-summary-tools:latest sample-agent/mcp-server/
+
+# Load directly into Kind — no registry needed
+kind load docker-image account-summary-tools:latest --name solo-bank-demo
+
+# Verify the image is available in the cluster
+docker exec solo-bank-demo-control-plane crictl images | grep account-summary</code></pre>
+
+        <p>Create the Kubernetes deployment at <code>sample-agent/manifests/deployment.yaml</code>:</p>
+        <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: account-summary-tools
+  namespace: bank-wiki
+  labels:
+    app: account-summary-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: account-summary-tools
+  template:
+    metadata:
+      labels:
+        app: account-summary-tools
+    spec:
+      containers:
+      - name: account-summary-tools
+        image: account-summary-tools:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8084
+        env:
+        - name: PORT
+          value: "8084"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: account-summary-tools
+  namespace: bank-wiki
+spec:
+  selector:
+    app: account-summary-tools
+  ports:
+  - port: 8084
+    targetPort: 8084</code></pre>
+
+        <p>Apply the deployment:</p>
+        <pre><code>kubectl apply -f sample-agent/manifests/deployment.yaml
+
+# Wait for the pod to be ready
+kubectl wait --for=condition=ready pod -l app=account-summary-tools \
+  -n bank-wiki --timeout=60s
+
+# Verify the MCP server is responding
+TOOL_POD=$(kubectl get pod -l app=account-summary-tools -n bank-wiki \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl exec "$TOOL_POD" -n bank-wiki -- wget -qO- http://localhost:8084/mcp</code></pre>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Register the Skill in AgentRegistry</h3>
+        <p>
+          AgentRegistry is a catalog of skills and tools. Register your new tool server so it
+          can be discovered by other agents and tooling:
+        </p>
+        <pre><code>curl -X POST http://localhost:30121/api/v1/skills \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "account-summary",
+    "description": "Generate brief customer account summaries with credit score, balance, and risk level",
+    "version": "1.0.0",
+    "tags": ["banking", "accounts", "summary"],
+    "tools": [
+      {
+        "name": "get_account_summary",
+        "description": "Get a brief account summary for a customer by their Customer ID",
+        "parameters": {
+          "customer_id": {
+            "type": "string",
+            "description": "The customer ID, e.g. CUST-00042",
+            "required": true
+          }
+        }
+      }
+    ]
+  }'</code></pre>
+
+        <p>Verify the skill was registered:</p>
+        <pre><code># List all registered skills
+curl http://localhost:30121/api/v1/skills | jq '.skills[].name'
+
+# Fetch the specific skill
+curl http://localhost:30121/api/v1/skills/account-summary | jq '.'</code></pre>
+
+        <div class="callout callout-tip">
+          <div class="callout-icon">💡</div>
+          <div class="callout-body">
+            <strong>AgentRegistry NodePort</strong>
+            AgentRegistry is exposed on NodePort 30121 by default in the demo cluster.
+            If you're accessing it differently (e.g., from inside the cluster), use the
+            service DNS: <code>http://agentregistry.agentregistry.svc.cluster.local:80</code>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>Create the RemoteMCPServer Resource</h3>
+        <p>
+          A <code>RemoteMCPServer</code> is a kagent CRD that tells the agent runtime where your
+          MCP tool server lives. Create it at
+          <code>sample-agent/manifests/remote-mcp-server.yaml</code>:
+        </p>
+        <pre><code>apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: account-summary-tools
+  namespace: kagent
+spec:
+  url: http://account-summary-tools.bank-wiki.svc.cluster.local:8084/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Account summary tools — generates brief customer account summaries"</code></pre>
+
+        <p>Apply the resource and verify:</p>
+        <pre><code>kubectl apply -f sample-agent/manifests/remote-mcp-server.yaml
+
+# Check the RemoteMCPServer status
+kubectl get remotemcpserver -n kagent account-summary-tools -o yaml
+
+# kagent will probe the /mcp endpoint — check that it shows Ready
+kubectl describe remotemcpserver -n kagent account-summary-tools</code></pre>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-number">5</div>
+        <h3>Create the Agent CRD</h3>
+        <p>
+          Now define the agent itself. Create
+          <code>sample-agent/manifests/agent.yaml</code> with a system prompt that instructs
+          the agent how to use your tool:
+        </p>
+        <pre><code>apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: bank-account-summary-agent
+  namespace: kagent
+spec:
+  description: "Solo Bank — Account Summary Agent. Generates at-a-glance summaries for bank staff."
+  type: Declarative
+  declarative:
+    modelConfig: anthropic-claude-sonnet
+    systemMessage: |
+      You are an account summary assistant at Solo Bank. You help bank staff quickly
+      understand a customer's overall financial standing with a brief, readable summary.
+
+      When given a customer ID or name:
+      1. Use the get_account_summary tool to retrieve their summary data
+      2. Present the key facts in a clear, structured format
+      3. Highlight any risk indicators or flags that require attention
+      4. Keep the response concise — this is meant for a quick briefing, not a full review
+
+      Format your response as:
+      **Customer:** [Name] ([ID])
+      **Credit Score:** [score] | **Risk Level:** [level]
+      **Total Balance:** $[amount] across [N] accounts
+      **Summary:** [plain-language summary]
+      **Action Required:** [any flags or next steps, or "None"]
+
+      If the customer is not found, say so clearly and suggest verifying the Customer ID.
+    tools:
+    - type: McpServer
+      mcpServer:
+        name: account-summary-tools
+        kind: RemoteMCPServer</code></pre>
+
+        <p>Apply the agent:</p>
+        <pre><code>kubectl apply -f sample-agent/manifests/agent.yaml
+
+# Verify the agent was created
+kubectl get agents -n kagent bank-account-summary-agent
+
+# Check the agent's status and tool wiring
+kubectl describe agent -n kagent bank-account-summary-agent</code></pre>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-number">6</div>
+        <h3>Test Your Agent</h3>
+        <p>
+          Open the kagent UI, select your new agent, and try it out:
+        </p>
+        <pre><code># Make sure the kagent UI port-forward is running
+kubectl port-forward svc/kagent-enterprise -n kagent 3000:80
+
+# Open in browser
+open http://localhost:3000</code></pre>
+
+        <p>
+          In the kagent UI, select <strong>bank-account-summary-agent</strong> from the agent
+          dropdown and try these prompts:
+        </p>
+
+        <div class="prompt-example">Give me a summary for Maria Garcia</div>
+        <div class="prompt-example">Summarize account CUST-00042</div>
+        <div class="prompt-example">What's the overview for customer CUST-00003?</div>
+
+        <h3>Expected Output</h3>
+        <pre><code>**Customer:** Maria Garcia (CUST-00042)
+**Credit Score:** 742 | **Risk Level:** Low
+**Total Balance:** $28,450.00 across 3 accounts
+**Summary:** Maria is a long-standing customer (6 years) with good credit and
+healthy balances across checking, savings, and a CD account. No compliance concerns.
+**Action Required:** None</code></pre>
+
+        <p>You can also test the tool server directly without going through the agent:</p>
+        <pre><code># Direct MCP tool call via kubectl exec
+TOOL_POD=$(kubectl get pod -l app=account-summary-tools -n bank-wiki \
+  -o jsonpath='{.items[0].metadata.name}')
+
+kubectl exec "$TOOL_POD" -n bank-wiki -- wget -qO- \
+  --post-data='{"jsonrpc":"2.0","method":"tools/call","params":{"name":"get_account_summary","arguments":{"customer_id":"CUST-00042"}},"id":1}' \
+  --header='Content-Type: application/json' \
+  http://localhost:8084/mcp | jq '.'</code></pre>
+      </div>
+
+    </div>
+
+    <!-- What's Next -->
+    <h2>What's Next</h2>
+    <p>
+      Congratulations — you've built and deployed a custom agent on the Solo.io AI Enterprise
+      Platform. Here are some ways to extend what you've built:
+    </p>
+
+    <div class="cards" style="margin-top: 16px;">
+      <div class="card">
+        <h3>Connect to Real Data</h3>
+        <p>
+          Replace the mock data in <code>generateSummary()</code> with real HTTP calls to the
+          <code>bank-customer-tools</code> MCP server. Use the service DNS:
+          <code>bank-customer-tools.bank-wiki.svc.cluster.local:8081/mcp</code>
+        </p>
+      </div>
+      <div class="card">
+        <h3>Add More Tools</h3>
+        <p>
+          Register additional functions on the same MCP server — for example,
+          <code>get_recent_alerts</code> or <code>get_product_recommendations</code>.
+          Each tool becomes callable by any agent that references your RemoteMCPServer.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Observe with AgentGateway</h3>
+        <p>
+          Route your agent's tool calls through AgentGateway to get OTEL tracing, rate limiting,
+          and policy enforcement on every tool invocation. Update the RemoteMCPServer URL to
+          point to the gateway.
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <p>Powered by <strong>Solo.io</strong> — AI Enterprise Platform for Kubernetes</p>
+    <div class="footer-versions">
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        kagent v0.3+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentGateway Enterprise v2.2.x
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        AgentRegistry OSS v0.1+
+      </div>
+      <div class="footer-version-item">
+        <div class="version-dot"></div>
+        Kind v0.20+
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
