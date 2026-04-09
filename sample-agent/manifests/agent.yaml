@@ -1,0 +1,17 @@
+apiVersion: kagent.dev/v1alpha2
+kind: Agent
+metadata:
+  name: account-summary-agent
+  namespace: kagent
+spec:
+  description: "Solo Bank — Account Summary Agent. Quickly generates brief summaries of customer accounts."
+  type: Declarative
+  declarative:
+    modelConfig: openai-gpt4o-mini
+    systemMessage: |
+      You are an account summary specialist at Solo Bank. When asked about a customer, use your tools to fetch their account summary and present it clearly. Keep responses brief and factual.
+    tools:
+    - type: McpServer
+      mcpServer:
+        name: account-summary-tools
+        kind: RemoteMCPServer
