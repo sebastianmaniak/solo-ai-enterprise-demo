@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bank-wiki-server
+  namespace: bank-wiki
+  labels:
+    app: bank-wiki-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bank-wiki-server
+  template:
+    metadata:
+      labels:
+        app: bank-wiki-server
+    spec:
+      containers:
+      - name: wiki-server
+        image: bank-wiki-server:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bank-wiki-server
+  namespace: bank-wiki
+spec:
+  selector:
+    app: bank-wiki-server
+  ports:
+  - port: 8080
+    targetPort: 8080
