@@ -154,6 +154,26 @@
             <td>Internal/DevOps only</td>
           </tr>
           <tr>
+            <td>Application status, system health, datacenter load</td>
+            <td><span class="badge badge-agent">Operations Monitor Agent</span></td>
+            <td>Real-time monitoring data</td>
+          </tr>
+          <tr>
+            <td>Active incidents, IT tickets, SLA tracking</td>
+            <td><span class="badge badge-agent">Incident Manager Agent</span></td>
+            <td>Incident P1/P2/P3 tracking</td>
+          </tr>
+          <tr>
+            <td>Full operations overview, cross-system correlation</td>
+            <td><span class="badge badge-agent">Operations Center Agent</span></td>
+            <td>Multi-agent coordinator</td>
+          </tr>
+          <tr>
+            <td>Cross-layer infra issues (K8s + Helm + IT)</td>
+            <td><span class="badge badge-agent">Infrastructure Support Agent</span></td>
+            <td>Multi-domain diagnosis</td>
+          </tr>
+          <tr>
             <td>Ambiguous requests</td>
             <td><em>Clarifying question</em></td>
             <td>Asks exactly one question before routing</td>
@@ -322,9 +342,9 @@ Recommendation: Approve at 6.625% with standard 20% down payment.</code></pre>
     <h2>Using the Kubernetes Agent</h2>
     <p>
       The Kubernetes Agent (<code>bank-k8s-agent</code>) is an <strong>internal/DevOps-only</strong>
-      agent that provides infrastructure guidance. It knows the Solo Bank cluster architecture,
-      including namespaces, services, ports, and dependencies. No MCP tools — pure knowledge-based
-      advisory. Powered by <strong>Claude Sonnet</strong>.
+      agent with <strong>live cluster access</strong> via 18 Kubernetes tools. It can get resources,
+      describe pods, check logs, apply manifests, and diagnose connectivity issues.
+      Powered by <strong>GPT-4o</strong> with the <code>kagent-tool-server</code> MCP server.
     </p>
 
     <h3>Example Prompts</h3>
@@ -340,7 +360,7 @@ Recommendation: Approve at 6.625% with standard 20% down payment.</code></pre>
       agent specializing in Helm release management. It knows all Solo Bank Helm releases
       (kagent-enterprise, management UI, CRDs) and can advise on upgrades, rollbacks, and
       configuration. No MCP tools — pure knowledge-based advisory.
-      Powered by <strong>Claude Sonnet</strong>.
+      Powered by <strong>GPT-4o Mini</strong>.
     </p>
 
     <h3>Example Prompts</h3>
@@ -348,6 +368,80 @@ Recommendation: Approve at 6.625% with standard 20% down payment.</code></pre>
     <div class="prompt-example">How do I upgrade kagent-enterprise to a new version?</div>
     <div class="prompt-example">What's the correct install order for the Helm charts?</div>
     <div class="prompt-example">How do I roll back the management UI if an upgrade fails?</div>
+
+    <!-- Operations Monitor Agent -->
+    <h2>Using the Operations Monitor Agent</h2>
+    <p>
+      The Operations Monitor Agent (<code>bank-ops-agent</code>) provides real-time visibility into
+      the health of all banking applications and datacenter infrastructure. It monitors uptime,
+      latency, error rates, and load across 6 core applications and 4 datacenters.
+      Powered by <strong>GPT-4o</strong> with access to <code>bank-status-tools</code>.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">What's the status of all banking applications?</div>
+    <div class="prompt-example">Is the mortgage processing system healthy?</div>
+    <div class="prompt-example">What's the status of our datacenters?</div>
+    <div class="prompt-example">Give me a full system health report</div>
+    <div class="prompt-example">Show me any apps with elevated error rates</div>
+
+    <!-- Incident Manager Agent -->
+    <h2>Using the Incident Manager Agent</h2>
+    <p>
+      The Incident Manager Agent (<code>bank-incident-agent</code>) tracks all active incidents
+      and IT tickets, coordinates response efforts, and ensures SLA compliance. It manages
+      incidents by severity (P1/P2/P3) and tracks tickets across categories.
+      Powered by <strong>GPT-4o</strong> with access to <code>bank-incident-tools</code>.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">What are the current open incidents?</div>
+    <div class="prompt-example">Are there any P1 incidents right now?</div>
+    <div class="prompt-example">Show me all open IT tickets</div>
+    <div class="prompt-example">Search for anything related to ATM issues</div>
+    <div class="prompt-example">What tickets are high priority right now?</div>
+
+    <!-- Operations Center Agent -->
+    <h2>Using the Operations Center Agent</h2>
+    <p>
+      The Operations Center Agent (<code>bank-ops-center-agent</code>) is a <strong>multi-agent
+      coordinator</strong> that delegates to three specialist sub-agents: Operations Monitor,
+      Incident Manager, and IT Support. It provides a unified operations view and correlates
+      findings across systems. Powered by <strong>GPT-4o</strong>.
+    </p>
+
+    <div class="callout callout-tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Multi-Agent Architecture</strong>
+        The Operations Center Agent uses kagent's <code>type: Agent</code> tool type to
+        delegate to other agents. This is different from MCP tools — it orchestrates
+        conversations with sub-agents to build a comprehensive picture.
+      </div>
+    </div>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">Give me a full operations status report</div>
+    <div class="prompt-example">Are the mortgage processing issues related to any open incidents?</div>
+    <div class="prompt-example">Should we escalate the ATM outage?</div>
+    <div class="prompt-example">Executive briefing — what do I need to know right now?</div>
+    <div class="prompt-example">Correlate the ATM outage with any open tickets</div>
+
+    <!-- Infrastructure Support Agent -->
+    <h2>Using the Infrastructure Support Agent</h2>
+    <p>
+      The Infrastructure Support Agent (<code>bank-infra-support-agent</code>) is a
+      <strong>multi-domain coordinator</strong> for Kubernetes, Helm, and IT systems.
+      When an issue spans layers — like an agent failing because of a misconfigured Helm
+      value affecting a K8s pod — this agent connects the dots.
+      Powered by <strong>GPT-4o</strong> with access to all 3 bank MCP servers.
+    </p>
+
+    <h3>Example Prompts</h3>
+    <div class="prompt-example">An agent can't reach its MCP tools — diagnose the full chain</div>
+    <div class="prompt-example">We need to upgrade kagent — what's the full checklist?</div>
+    <div class="prompt-example">The Management UI is down — walk me through the investigation</div>
+    <div class="prompt-example">Run a health check across all infrastructure layers</div>
 
     <!-- Management UI -->
     <h2>Using the Management UI</h2>

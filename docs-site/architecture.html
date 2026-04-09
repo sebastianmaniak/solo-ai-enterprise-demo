@@ -51,38 +51,51 @@
 │  ┌────────────────────────────────────────────────────────────────────────┐ │
 │  │  namespace: kagent                                                      │ │
 │  │                                                                         │ │
-│  │   ┌──────────────────────────────────────────────────────────────┐    │ │
-│  │   │  kagent-enterprise (controller + KMCP)                        │    │ │
-│  │   │  NodePort: 30083 (API)                                         │    │ │
-│  │   │                                                               │    │ │
-│  │   │  ┌──────────────────┐  ┌──────────────────────────────────┐  │    │ │
-│  │   │  │ bank-triage-agent│  │  bank-customer-service-agent     │  │    │ │
-│  │   │  │ Claude Sonnet    │  │  GPT-4o Mini                     │  │    │ │
-│  │   │  │ no tools         │  │  → customer-tools, txn-tools     │  │    │ │
-│  │   │  └──────────────────┘  └──────────────────────────────────┘  │    │ │
-│  │   │                                                               │    │ │
-│  │   │  ┌───────────────────────────┐  ┌─────────────────────────┐  │    │ │
-│  │   │  │ bank-mortgage-advisor     │  │ bank-compliance-agent   │  │    │ │
-│  │   │  │ Claude Sonnet             │  │ Claude Sonnet           │  │    │ │
-│  │   │  │ → customer, policy tools  │  │ → all 3 MCP servers     │  │    │ │
-│  │   │  └───────────────────────────┘  └─────────────────────────┘  │    │ │
-│  │   │                                                               │    │ │
-│  │   │  ┌──────────────────┐  ┌──────────────────┐  ┌────────────┐ │    │ │
-│  │   │  │ bank-k8s-agent   │  │ bank-helm-agent  │  │ bank-it    │ │    │ │
-│  │   │  │ Claude Sonnet    │  │ Claude Sonnet    │  │  -agent    │ │    │ │
-│  │   │  │ no tools         │  │ no tools         │  │ → all 3    │ │    │ │
-│  │   │  └──────────────────┘  └──────────────────┘  └────────────┘ │    │ │
-│  │   └──────────────────────────────────────────────────────────────┘    │ │
+│  │   kagent-enterprise (controller + KMCP)  NodePort: 30083                │ │
 │  │                                                                         │ │
-│  │   ┌──────────────────────────────────────────────────────────────┐    │ │
-│  │   │  solo-enterprise-ui (Management UI)                           │    │ │
-│  │   │  NodePort: 30090                                               │    │ │
-│  │   └──────────────────────────────────────────────────────────────┘    │ │
+│  │   BANKING AGENTS:                                                       │ │
+│  │   ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │ │
+│  │   │ bank-triage      │  │ bank-customer    │  │ bank-mortgage    │   │ │
+│  │   │ GPT-4o           │  │ GPT-4o Mini      │  │ GPT-4o           │   │ │
+│  │   │ no tools (router)│  │ → cust, txn tools│  │ → cust, policy   │   │ │
+│  │   └──────────────────┘  └──────────────────┘  └──────────────────┘   │ │
+│  │   ┌──────────────────┐  ┌──────────────────┐                         │ │
+│  │   │ bank-compliance  │  │ bank-it-agent    │                         │ │
+│  │   │ GPT-4o           │  │ GPT-4o           │                         │ │
+│  │   │ → all bank tools │  │ → all bank tools │                         │ │
+│  │   └──────────────────┘  └──────────────────┘                         │ │
 │  │                                                                         │ │
-│  │   CRDs: Agent, ModelConfig, RemoteMCPServer                            │ │
-│  │     bank-customer-tools  → bank-wiki:8081/mcp  (via KMCP)             │ │
-│  │     bank-policy-tools    → bank-wiki:8082/mcp  (via KMCP)             │ │
-│  │     bank-transaction-tools → bank-wiki:8083/mcp (via KMCP)            │ │
+│  │   INFRASTRUCTURE AGENTS:                                                │ │
+│  │   ┌──────────────────┐  ┌──────────────────┐                         │ │
+│  │   │ bank-k8s-agent   │  │ bank-helm-agent  │                         │ │
+│  │   │ GPT-4o           │  │ GPT-4o Mini      │                         │ │
+│  │   │ → 18 k8s tools   │  │ no tools (KB)    │                         │ │
+│  │   └──────────────────┘  └──────────────────┘                         │ │
+│  │                                                                         │ │
+│  │   OPERATIONS AGENTS:                                                    │ │
+│  │   ┌──────────────────┐  ┌──────────────────┐                         │ │
+│  │   │ bank-ops-agent   │  │ bank-incident    │                         │ │
+│  │   │ GPT-4o           │  │ GPT-4o           │                         │ │
+│  │   │ → status tools   │  │ → incident tools │                         │ │
+│  │   └──────────────────┘  └──────────────────┘                         │ │
+│  │                                                                         │ │
+│  │   MULTI-AGENT COORDINATORS:                                             │ │
+│  │   ┌────────────────────────┐  ┌────────────────────────┐             │ │
+│  │   │ bank-infra-support     │  │ bank-ops-center        │             │ │
+│  │   │ GPT-4o                 │  │ GPT-4o                 │             │ │
+│  │   │ → all bank MCP tools   │  │ → ops, incident, IT    │             │ │
+│  │   │   (cross-layer diag)   │  │   agents (delegation)  │             │ │
+│  │   └────────────────────────┘  └────────────────────────┘             │ │
+│  │                                                                         │ │
+│  │   solo-enterprise-ui (Management UI)  NodePort: 30090                  │ │
+│  │                                                                         │ │
+│  │   RemoteMCPServer CRDs (6 total):                                      │ │
+│  │     bank-customer-tools    → bank-wiki:8081/mcp  (via KMCP)           │ │
+│  │     bank-policy-tools      → bank-wiki:8082/mcp  (via KMCP)           │ │
+│  │     bank-transaction-tools → bank-wiki:8083/mcp  (via KMCP)           │ │
+│  │     bank-status-tools      → bank-wiki:8085/mcp  (via KMCP)           │ │
+│  │     bank-incident-tools    → bank-wiki:8086/mcp  (via KMCP)           │ │
+│  │     kagent-tool-server     → kagent:8084/mcp     (built-in k8s tools) │ │
 │  └────────────────────────────────────────────────────────────────────────┘ │
 │                                                                             │
 │  ┌──────────────────────────────────────────────────────────────────────┐  │
@@ -93,6 +106,12 @@
 │  │   │ Port: 8081         │  │ Port: 8082         │  │ Port: 8083    │  │  │
 │  │   │ MCP via HTTP       │  │ MCP via HTTP       │  │ MCP via HTTP  │  │  │
 │  │   └────────────────────┘  └────────────────────┘  └───────────────┘  │  │
+│  │                                                                        │  │
+│  │   ┌────────────────────┐  ┌────────────────────┐                     │  │
+│  │   │ bank-status-tools  │  │ bank-incident-tools│                     │  │
+│  │   │ Port: 8085         │  │ Port: 8086         │                     │  │
+│  │   │ MCP via HTTP       │  │ MCP via HTTP       │                     │  │
+│  │   └────────────────────┘  └────────────────────┘                     │  │
 │  │                                                                        │  │
 │  │   ┌────────────────────┐  ┌────────────────────────────────────────┐  │  │
 │  │   │ bank-wiki-server   │  │ bank-docs-site (this site)             │  │  │
@@ -146,7 +165,7 @@ External Access (all NodePort — no port-forward needed):
           <tr>
             <td><code>bank-wiki</code></td>
             <td>All banking application workloads</td>
-            <td>bank-wiki-server, bank-customer-tools, bank-policy-tools, bank-transaction-tools, bank-docs-site</td>
+            <td>bank-wiki-server, bank-customer-tools, bank-policy-tools, bank-transaction-tools, bank-status-tools, bank-incident-tools, bank-docs-site</td>
             <td><code>manifests/namespaces.yaml</code></td>
           </tr>
         </tbody>
@@ -258,13 +277,13 @@ External Access (all NodePort — no port-forward needed):
             <td><strong>GPT-4o</strong></td>
             <td>gpt-4o (latest)</td>
             <td>OpenAI API</td>
-            <td>Used by Triage, Mortgage Advisor, Compliance, K8s, IT, Infra Support agents</td>
+            <td>Used by 9 agents: Triage, Mortgage, Compliance, K8s, IT, Ops Monitor, Incident Manager, Infra Support, Ops Center</td>
           </tr>
           <tr>
             <td><strong>GPT-4o Mini</strong></td>
             <td>gpt-4o-mini (latest)</td>
             <td>OpenAI API</td>
-            <td>Used by Customer Service and Helm agents</td>
+            <td>Used by 2 agents: Customer Service and Helm</td>
           </tr>
           <tr>
             <td><strong>nginx</strong></td>
@@ -279,7 +298,7 @@ External Access (all NodePort — no port-forward needed):
     <!-- Agent Tool Matrix -->
     <h2>Agent Tool Access Matrix</h2>
     <p>
-      This table shows which MCP servers each agent has access to. Access is defined in the
+      This table shows which MCP servers and sub-agents each agent has access to. Access is defined in the
       Agent CRD's <code>spec.declarative.tools</code> list.
     </p>
     <div class="table-wrapper">
@@ -288,51 +307,136 @@ External Access (all NodePort — no port-forward needed):
           <tr>
             <th>Agent</th>
             <th>Model</th>
-            <th>Customer Tools<br><small>(port 8081)</small></th>
-            <th>Policy Tools<br><small>(port 8082)</small></th>
-            <th>Transaction Tools<br><small>(port 8083)</small></th>
+            <th>Customer<br><small>8081</small></th>
+            <th>Policy<br><small>8082</small></th>
+            <th>Txn<br><small>8083</small></th>
+            <th>Status<br><small>8085</small></th>
+            <th>Incident<br><small>8086</small></th>
+            <th>K8s<br><small>8084</small></th>
+            <th>Sub-Agents</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>
-              <strong>Triage Agent</strong><br>
-              <code>bank-triage-agent</code>
-            </td>
-            <td><span class="badge badge-model">Claude Sonnet</span></td>
+            <td><strong>Triage</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
             <td style="text-align:center; color: #dc2626;">✗</td>
             <td style="text-align:center; color: #dc2626;">✗</td>
             <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
           </tr>
           <tr>
-            <td>
-              <strong>Customer Service Agent</strong><br>
-              <code>bank-customer-service-agent</code>
-            </td>
+            <td><strong>Customer Service</strong></td>
             <td><span class="badge badge-model">GPT-4o Mini</span></td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
             <td style="text-align:center; color: #dc2626;">✗</td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
           </tr>
           <tr>
-            <td>
-              <strong>Mortgage Advisor Agent</strong><br>
-              <code>bank-mortgage-advisor-agent</code>
-            </td>
-            <td><span class="badge badge-model">Claude Sonnet</span></td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td><strong>Mortgage Advisor</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
             <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
           </tr>
           <tr>
-            <td>
-              <strong>Compliance Agent</strong><br>
-              <code>bank-compliance-agent</code>
-            </td>
-            <td><span class="badge badge-model">Claude Sonnet</span></td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
-            <td style="text-align:center; color: #16a34a; font-size:1.2rem;">✓</td>
+            <td><strong>Compliance</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr>
+            <td><strong>IT Support</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr>
+            <td><strong>Kubernetes</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr>
+            <td><strong>Helm</strong></td>
+            <td><span class="badge badge-model">GPT-4o Mini</span></td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr>
+            <td><strong>Ops Monitor</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr>
+            <td><strong>Incident Manager</strong></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr style="background: rgba(251,191,36,0.05);">
+            <td><strong>Infra Support</strong> <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.6rem;">MULTI</span></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #16a34a;">✓</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">—</td>
+          </tr>
+          <tr style="background: rgba(251,191,36,0.05);">
+            <td><strong>Ops Center</strong> <span class="badge" style="background:#fef3c7;color:#92400e;font-size:0.6rem;">MULTI</span></td>
+            <td><span class="badge badge-model">GPT-4o</span></td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="text-align:center; color: #dc2626;">✗</td>
+            <td style="font-size:0.75rem;">ops, incident, IT</td>
           </tr>
         </tbody>
       </table>
@@ -342,9 +446,19 @@ External Access (all NodePort — no port-forward needed):
       <div class="callout-icon">⚠️</div>
       <div class="callout-body">
         <strong>Compliance Agent is Internal Only</strong>
-        The Compliance Agent has the broadest tool access — all three MCP servers. It is
-        intended for internal bank staff only. The Triage Agent's system prompt explicitly
+        The Compliance Agent has the broadest bank tool access — all three banking MCP servers.
+        It is intended for internal bank staff only. The Triage Agent's system prompt explicitly
         prevents routing customers to it.
+      </div>
+    </div>
+
+    <div class="callout callout-info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Multi-Agent Delegation</strong>
+        The Operations Center Agent uses kagent's <code>type: Agent</code> tool type to delegate to
+        other agents (Ops Monitor, Incident Manager, IT Support) rather than calling MCP tools directly.
+        This enables cross-system correlation through agent orchestration.
       </div>
     </div>
 
@@ -456,6 +570,114 @@ External Access (all NodePort — no port-forward needed):
       </table>
     </div>
 
+    <h3>bank-status-tools (port 8085)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>get_app_status</code></td>
+            <td>Get the health status and metrics for a specific banking application by ID</td>
+          </tr>
+          <tr>
+            <td><code>list_apps</code></td>
+            <td>List all banking applications with their current status (6 apps total)</td>
+          </tr>
+          <tr>
+            <td><code>get_datacenter_status</code></td>
+            <td>Get the health status of a specific datacenter by ID</td>
+          </tr>
+          <tr>
+            <td><code>list_datacenters</code></td>
+            <td>List all datacenters with their current status (4 regions)</td>
+          </tr>
+          <tr>
+            <td><code>get_system_overview</code></td>
+            <td>Generate a system-wide health overview combining app and datacenter status</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>bank-incident-tools (port 8086)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>get_incident</code></td>
+            <td>Get details for a specific incident by ID (includes timeline, assignee, status)</td>
+          </tr>
+          <tr>
+            <td><code>list_incidents</code></td>
+            <td>List all active incidents with severity, status, and affected applications</td>
+          </tr>
+          <tr>
+            <td><code>get_ticket</code></td>
+            <td>Get details for a specific IT ticket by ID</td>
+          </tr>
+          <tr>
+            <td><code>list_tickets</code></td>
+            <td>List all IT tickets with priority, category, and assignment</td>
+          </tr>
+          <tr>
+            <td><code>search_incidents</code></td>
+            <td>Search across all incidents and tickets by keyword</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>kagent-tool-server (port 8084 — built-in)</h3>
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool Name</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>k8s_get_resources</code></td>
+            <td>List Kubernetes resources by kind in a namespace</td>
+          </tr>
+          <tr>
+            <td><code>k8s_describe_resource</code></td>
+            <td>Get detailed description of a specific resource</td>
+          </tr>
+          <tr>
+            <td><code>k8s_get_pod_logs</code></td>
+            <td>Retrieve logs from a specific pod</td>
+          </tr>
+          <tr>
+            <td><code>k8s_get_events</code></td>
+            <td>Get Kubernetes events for a namespace or resource</td>
+          </tr>
+          <tr>
+            <td><code>k8s_apply_manifest</code></td>
+            <td>Apply a Kubernetes manifest (create or update resources)</td>
+          </tr>
+          <tr>
+            <td colspan="2" style="text-align:center; color: var(--text-muted); font-size:0.85rem;">
+              + 13 more tools (get_resource_yaml, check_service_connectivity, execute_command,
+              patch_resource, delete_resource, create_resource, label_resource, etc.)
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- kagent CRD Configuration -->
     <h2>kagent CRD Configuration</h2>
     <p>
@@ -485,7 +707,7 @@ External Access (all NodePort — no port-forward needed):
           <tr>
             <td><code>RemoteMCPServer</code></td>
             <td>Declares the URL and protocol for an MCP tool server accessible via KMCP</td>
-            <td><code>bank-customer-tools</code>, <code>bank-policy-tools</code></td>
+            <td><code>bank-customer-tools</code>, <code>bank-status-tools</code>, <code>bank-incident-tools</code></td>
           </tr>
         </tbody>
       </table>
