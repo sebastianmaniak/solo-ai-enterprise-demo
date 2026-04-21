@@ -94,7 +94,7 @@ spec:
     tools:
     - type: McpServer
       mcpServer:
-        name: bank-customer-tools
+        name: bank-customer-tools-direct
         kind: RemoteMCPServer
         toolNames:
         - lookup_customer
@@ -102,7 +102,7 @@ spec:
         - get_account_balance
     - type: McpServer
       mcpServer:
-        name: bank-policy-tools
+        name: bank-policy-tools-direct
         kind: RemoteMCPServer
         toolNames:
         - get_policy
@@ -111,7 +111,7 @@ spec:
         - get_rate_for_profile
     - type: McpServer
       mcpServer:
-        name: bank-transaction-tools
+        name: bank-transaction-tools-direct
         kind: RemoteMCPServer
         toolNames:
         - get_transaction_history

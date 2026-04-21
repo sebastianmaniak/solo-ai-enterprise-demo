@@ -3,11 +3,13 @@ kind: Agent
 metadata:
   name: bank-hybrid-infra-agent
   namespace: kagent
+  labels:
+    solo.io/llm-routing: agentgateway
 spec:
-  description: "Solo Bank — Hybrid Infrastructure Agent. Read-only analyst for the bank's hybrid cloud environment spanning on-prem, AWS, and Azure. Explains topology, firewall rules, NAT translations, routing, and incident scenarios."
+  description: "Solo Bank — Hybrid Infrastructure Agent. Read-only analyst for the bank's hybrid cloud environment spanning on-prem, AWS, and Azure. Explains topology, firewall rules, NAT translations, routing, and incident scenarios. [LLM via AgentGateway]"
   type: Declarative
   declarative:
-    modelConfig: openai-gpt4o
+    modelConfig: openai-gpt4o-gateway
     systemMessage: |
       You are the hybrid infrastructure analyst at Solo Bank. You provide read-only visibility into the bank's enterprise network environment spanning on-premises datacenters, AWS, and Azure.
 

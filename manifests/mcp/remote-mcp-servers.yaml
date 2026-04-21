@@ -1,40 +1,62 @@
+## ── MCP servers routed through AgentGateway ──────────────────────────
+## Used by: customer-service, mortgage-advisor, compliance agents
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: bank-customer-tools
   namespace: kagent
+  labels:
+    solo.io/mcp-routing: agentgateway
 spec:
   url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/customer
   protocol: STREAMABLE_HTTP
-  description: "Solo Bank customer data tools — lookup, search, account balances"
+  description: "Solo Bank customer data tools — lookup, search, account balances [MCP via AgentGateway]"
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: bank-policy-tools
   namespace: kagent
+  labels:
+    solo.io/mcp-routing: agentgateway
 spec:
   url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/policy
   protocol: STREAMABLE_HTTP
-  description: "Solo Bank policy and rates tools — lending policies, rate tables, credit tier lookups"
+  description: "Solo Bank policy and rates tools — lending policies, rate tables, credit tier lookups [MCP via AgentGateway]"
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: bank-transaction-tools
   namespace: kagent
+  labels:
+    solo.io/mcp-routing: agentgateway
 spec:
   url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/transaction
   protocol: STREAMABLE_HTTP
-  description: "Solo Bank transaction and account tools — transaction history, account details, search"
+  description: "Solo Bank transaction and account tools — transaction history, account details, search [MCP via AgentGateway]"
 ---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: hybrid-infra-tools
+  namespace: kagent
+  labels:
+    solo.io/mcp-routing: agentgateway
+spec:
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/hybrid-infra
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank hybrid infrastructure tools — topology, firewall rules, NAT, routing, incident scenarios [MCP via AgentGateway]"
+---
+## ── MCP servers with direct connections ──────────────────────────────
+## Used by: ops-agent, incident-agent (direct-only agents)
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
   name: bank-status-tools
   namespace: kagent
 spec:
-  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/status
+  url: http://bank-status-tools.bank-wiki.svc.cluster.local:8085/mcp
   protocol: STREAMABLE_HTTP
   description: "Solo Bank application status and datacenter monitoring tools"
 ---
@@ -44,16 +66,37 @@ metadata:
   name: bank-incident-tools
   namespace: kagent
 spec:
-  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/incident
+  url: http://bank-incident-tools.bank-wiki.svc.cluster.local:8086/mcp
   protocol: STREAMABLE_HTTP
   description: "Solo Bank incident management and IT ticketing tools"
+---
+## Used by: it-agent, infra-support-agent (direct agents sharing same tool servers)
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-customer-tools-direct
+  namespace: kagent
+spec:
+  url: http://bank-customer-tools.bank-wiki.svc.cluster.local:8081/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank customer data tools — lookup, search, account balances [direct]"
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: RemoteMCPServer
 metadata:
-  name: hybrid-infra-tools
+  name: bank-policy-tools-direct
   namespace: kagent
 spec:
-  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/hybrid-infra
+  url: http://bank-policy-tools.bank-wiki.svc.cluster.local:8082/mcp
   protocol: STREAMABLE_HTTP
-  description: "Solo Bank hybrid infrastructure tools — topology, firewall rules, NAT, routing, incident scenarios across on-prem, AWS, and Azure"
+  description: "Solo Bank policy and rates tools — lending policies, rate tables, credit tier lookups [direct]"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: bank-transaction-tools-direct
+  namespace: kagent
+spec:
+  url: http://bank-transaction-tools.bank-wiki.svc.cluster.local:8083/mcp
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank transaction and account tools — transaction history, account details, search [direct]"

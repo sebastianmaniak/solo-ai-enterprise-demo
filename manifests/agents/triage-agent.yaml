@@ -3,11 +3,13 @@ kind: Agent
 metadata:
   name: bank-triage-agent
   namespace: kagent
+  labels:
+    solo.io/llm-routing: agentgateway
 spec:
-  description: "Solo Bank — Front Door Triage Agent. Routes customer inquiries to the appropriate specialist."
+  description: "Solo Bank — Front Door Triage Agent. Routes customer inquiries to the appropriate specialist. [LLM via AgentGateway]"
   type: Declarative
   declarative:
-    modelConfig: openai-gpt4o
+    modelConfig: openai-gpt4o-gateway
     systemMessage: |
       You are the front-door triage agent for Solo Bank. Your role is to greet customers, understand their needs, and route them to the appropriate specialist.
 

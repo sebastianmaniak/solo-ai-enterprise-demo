@@ -3,11 +3,13 @@ kind: Agent
 metadata:
   name: bank-customer-service-agent
   namespace: kagent
+  labels:
+    solo.io/llm-routing: agentgateway
 spec:
-  description: "Solo Bank — Customer Service Agent. Handles account inquiries, balance checks, and transaction questions."
+  description: "Solo Bank — Customer Service Agent. Handles account inquiries, balance checks, and transaction questions. [LLM via AgentGateway]"
   type: Declarative
   declarative:
-    modelConfig: openai-gpt4o-mini
+    modelConfig: openai-gpt4o-mini-gateway
     systemMessage: |
       You are a customer service representative at Solo Bank. You help customers with account inquiries, balance checks, transaction questions, and general banking needs.
 

@@ -542,7 +542,10 @@ for name in \
   bank-transaction-tools \
   bank-status-tools \
   bank-incident-tools \
-  hybrid-infra-tools
+  hybrid-infra-tools \
+  bank-customer-tools-direct \
+  bank-policy-tools-direct \
+  bank-transaction-tools-direct
 do
   ACCEPTED=$(kubectl get remotemcpserver "${name}" -n kagent \
     -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null || true)

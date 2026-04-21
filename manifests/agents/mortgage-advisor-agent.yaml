@@ -3,11 +3,13 @@ kind: Agent
 metadata:
   name: bank-mortgage-advisor-agent
   namespace: kagent
+  labels:
+    solo.io/llm-routing: agentgateway
 spec:
-  description: "Solo Bank — Mortgage Advisor Agent. Provides personalized mortgage rate quotes and lending guidance."
+  description: "Solo Bank — Mortgage Advisor Agent. Provides personalized mortgage rate quotes and lending guidance. [LLM via AgentGateway]"
   type: Declarative
   declarative:
-    modelConfig: openai-gpt4o
+    modelConfig: openai-gpt4o-gateway
     systemMessage: |
       You are a senior mortgage advisor at Solo Bank. You help customers understand mortgage options, rate eligibility, refinancing opportunities, and lending requirements.
 
