@@ -4,7 +4,7 @@ metadata:
   name: bank-customer-tools
   namespace: kagent
 spec:
-  url: http://bank-customer-tools.bank-wiki.svc.cluster.local:8081/mcp
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/customer
   protocol: STREAMABLE_HTTP
   description: "Solo Bank customer data tools — lookup, search, account balances"
 ---
@@ -14,7 +14,7 @@ metadata:
   name: bank-policy-tools
   namespace: kagent
 spec:
-  url: http://bank-policy-tools.bank-wiki.svc.cluster.local:8082/mcp
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/policy
   protocol: STREAMABLE_HTTP
   description: "Solo Bank policy and rates tools — lending policies, rate tables, credit tier lookups"
 ---
@@ -24,7 +24,7 @@ metadata:
   name: bank-transaction-tools
   namespace: kagent
 spec:
-  url: http://bank-transaction-tools.bank-wiki.svc.cluster.local:8083/mcp
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/transaction
   protocol: STREAMABLE_HTTP
   description: "Solo Bank transaction and account tools — transaction history, account details, search"
 ---
@@ -34,7 +34,7 @@ metadata:
   name: bank-status-tools
   namespace: kagent
 spec:
-  url: http://bank-status-tools.bank-wiki.svc.cluster.local:8085/mcp
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/status
   protocol: STREAMABLE_HTTP
   description: "Solo Bank application status and datacenter monitoring tools"
 ---
@@ -44,6 +44,16 @@ metadata:
   name: bank-incident-tools
   namespace: kagent
 spec:
-  url: http://bank-incident-tools.bank-wiki.svc.cluster.local:8086/mcp
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/incident
   protocol: STREAMABLE_HTTP
   description: "Solo Bank incident management and IT ticketing tools"
+---
+apiVersion: kagent.dev/v1alpha2
+kind: RemoteMCPServer
+metadata:
+  name: hybrid-infra-tools
+  namespace: kagent
+spec:
+  url: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/mcp/hybrid-infra
+  protocol: STREAMABLE_HTTP
+  description: "Solo Bank hybrid infrastructure tools — topology, firewall rules, NAT, routing, incident scenarios across on-prem, AWS, and Azure"

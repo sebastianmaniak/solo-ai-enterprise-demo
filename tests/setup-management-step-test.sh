@@ -10,8 +10,8 @@ fi
 
 block="$(
   awk '
-    /# Step 6: Install Management UI/ { in_block=1 }
-    /# Step 7: Install kagent Enterprise/ { exit }
+    /# Step 8: Install Management UI/ { in_block=1 }
+    /# Step 9: Install kagent Enterprise/ { exit }
     in_block { print }
   ' "${SCRIPT_PATH}"
 )"
@@ -19,7 +19,7 @@ block="$(
 block_without_comments="$(printf '%s\n' "${block}" | rg -v '^\s*#')"
 
 if [[ -z "${block}" ]]; then
-  echo "could not locate Step 6 management block in ${SCRIPT_PATH}" >&2
+  echo "could not locate Step 8 management block in ${SCRIPT_PATH}" >&2
   exit 1
 fi
 

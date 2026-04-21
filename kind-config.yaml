@@ -4,6 +4,10 @@ apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
   extraPortMappings:
+  # AgentGateway proxy
+  - containerPort: 30080
+    hostPort: 30080
+    protocol: TCP
   # AgentRegistry
   - containerPort: 30121
     hostPort: 30121

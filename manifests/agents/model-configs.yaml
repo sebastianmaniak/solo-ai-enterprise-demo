@@ -8,6 +8,8 @@ spec:
   provider: OpenAI
   apiKeySecret: openai-secret
   apiKeySecretKey: Authorization
+  openAI:
+    baseUrl: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/v1
 ---
 apiVersion: kagent.dev/v1alpha2
 kind: ModelConfig
@@ -19,3 +21,5 @@ spec:
   provider: OpenAI
   apiKeySecret: openai-secret
   apiKeySecretKey: Authorization
+  openAI:
+    baseUrl: http://agentgateway-proxy.agentgateway-system.svc.cluster.local/v1

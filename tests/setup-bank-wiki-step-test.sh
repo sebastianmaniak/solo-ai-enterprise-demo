@@ -10,14 +10,14 @@ fi
 
 block="$(
   awk '
-    /# Step 10: Deploy bank wiki and tool servers/ { in_block=1 }
+    /# Step 12: Deploy bank wiki and tool servers/ { in_block=1 }
     /echo -e "\$\{GREEN\}Bank wiki and tool servers deployed\.\$\{NC\}"/ { print; exit }
     in_block { print }
   ' "${SCRIPT_PATH}"
 )"
 
 if [[ -z "${block}" ]]; then
-  echo "could not locate Step 10 bank wiki block in ${SCRIPT_PATH}" >&2
+  echo "could not locate Step 12 bank wiki block in ${SCRIPT_PATH}" >&2
   exit 1
 fi
 
