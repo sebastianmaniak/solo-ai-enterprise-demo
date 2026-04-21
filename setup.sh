@@ -200,6 +200,8 @@ banner "Step 9: Install kagent Enterprise"
 # oidc.skipOBO=true: Skip On-Behalf-Of token generation since we don't have
 # a full OIDC IdP configured. Without this, agents fail with
 # "obo token handler not ready" at runtime.
+# kmcp.licensing.createSecret=false: the parent chart already creates the
+# enterprise-kagent-license secret; the KMCP sub-chart must not duplicate it.
 helm upgrade --install kagent-enterprise \
   oci://us-docker.pkg.dev/solo-public/kagent-enterprise-helm/charts/kagent-enterprise \
   --namespace kagent \
@@ -212,6 +214,8 @@ helm upgrade --install kagent-enterprise \
   --set oidc.skipOBO=true \
   --set otel.tracing.enabled=true \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
+  --set kmcp.licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
+  --set kmcp.licensing.createSecret=false \
   --wait --timeout 300s
 
 echo -e "${GREEN}kagent Enterprise installed.${NC}"
