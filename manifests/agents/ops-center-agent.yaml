@@ -3,11 +3,13 @@ kind: Agent
 metadata:
   name: bank-ops-center-agent
   namespace: kagent
+  labels:
+    solo.io/llm-routing: agentgateway
 spec:
-  description: "Solo Bank — Operations Center Agent. Multi-agent coordinator that combines system monitoring, incident management, and IT support into a unified operations view."
+  description: "Solo Bank — Operations Center Agent. Multi-agent coordinator that combines system monitoring, incident management, and IT support into a unified operations view. [LLM via AgentGateway]"
   type: Declarative
   declarative:
-    modelConfig: openai-gpt4o
+    modelConfig: openai-gpt4o-gateway
     systemMessage: |
       You are the Operations Center coordinator at Solo Bank. You are a multi-agent system that delegates to three specialist agents to provide a unified view of all bank operations.
 
