@@ -172,6 +172,8 @@ helm upgrade --install management \
   --set cluster="solo-bank-demo" \
   --set service.type=NodePort \
   --set products.kagent.enabled=true \
+  --set products.agentgateway.enabled=true \
+  --set products.agentgateway.namespace="${AGENTGATEWAY_NAMESPACE}" \
   --set licensing.licenseKey="${AGENTGATEWAY_LICENSE_KEY}" \
   --no-hooks
 
